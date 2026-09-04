@@ -1,0 +1,95 @@
+# ---------------------------------------------------------------------------
+# order-service
+#
+# Owns orders and the warehouse allocation engine, and orchestrates the saga
+# that turns a request into held-then-consumed stock.
+# ---------------------------------------------------------------------------
+server:
+  port: ${SERVER_PORT:8084}
+  error:
+    include-stacktrace: never
+
+spring:
+  application:
+    name: order-service
+
+  datasource:
+    url: ${ORDER_DB_URL:jdbc:postgresql://localhost:5432/order_db}
+    username: ${ORDER_DB_USER:order_user}
+    password: ${ORDER_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 5000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: orders
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    schemas: orders
+    default-schema: orders
+    create-schemas: true
+    locations: classpath:db/migration
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+security:
+  jwt:
+    jwk-set-uri: ${JWK_SET_URI:http://localhost:8081/api/v1/auth/.well-known/jwks.json}
+    issuer: ${JWT_ISSUER:logistics-auth}
+
+logistics:
+  allocation:
+    # Which rule applies when a request expresses no preference.
+    default-strategy: ${ALLOCATION_DEFAULT_STRATEGY:nearest}
+    # How long inventory-service should hold the stock. Must comfortably exceed the
+    # time this service needs to confirm, and stay short enough that a crash here
+    # does not strand stock for long.
+    reservation-ttl-seconds: ${RESERVATION_TTL_SECONDS:300}
+    # Availability is a snapshot, not a lock, so another order can take the units
+    # between reading and reserving. Two attempts absorb that race; more would turn
+    # a stockout into a stampede.
+    max-allocation-attempts: ${MAX_ALLOCATION_ATTEMPTS:2}
+
+  downstream:
+    # Through the gateway, not to the services directly: routing and tracing stay
+    # in one place, as decided in phase 0.
+    base-uri: ${GATEWAY_URI:http://localhost:8080}
+    # A service that has not accepted a connection in two seconds is down, not slow.
+    connect-timeout: ${DOWNSTREAM_CONNECT_TIMEOUT:2s}
+    # Bounded: without it, a hung downstream would hold this thread until the client
+    # gives up, and a handful of those exhausts the pool.
+    read-timeout: ${DOWNSTREAM_READ_TIMEOUT:5s}
+    client-id: ${ORDER_SERVICE_CLIENT_ID:order-service}
+    client-secret: ${ORDER_SERVICE_CLIENT_SECRET:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.logistics.order: ${LOG_LEVEL:INFO}
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN

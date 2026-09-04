@@ -1,0 +1,17 @@
+# Normalise line endings. Shell scripts and SQL files are mounted into Linux containers:
+# a CRLF ending would make the container entrypoint fail with "bad interpreter: no such file".
+* text=auto eol=lf
+
+*.sh    text eol=lf
+*.sql   text eol=lf
+*.js    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+Dockerfile text eol=lf
+
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+
+*.jar   binary
+*.png   binary
+*.jpg   binary

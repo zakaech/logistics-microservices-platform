@@ -1,0 +1,51 @@
+# ---------------------------------------------------------------------------
+# catalog-service
+#
+# The only service backed by MongoDB: a technical sheet has different attributes
+# per category, so the document IS the aggregate (see docs/01-architecture.md 5).
+# ---------------------------------------------------------------------------
+server:
+  port: ${SERVER_PORT:8082}
+  error:
+    include-stacktrace: never
+
+spring:
+  application:
+    name: catalog-service
+
+  data:
+    mongodb:
+      uri: ${CATALOG_MONGO_URI}
+      auto-index-creation: false   # indexes are created explicitly, see MongoIndexInitializer
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+security:
+  jwt:
+    # No signing key here: this service only VERIFIES tokens, using the public
+    # keys auth-service publishes. It could not mint one if it tried.
+    jwk-set-uri: ${JWK_SET_URI:http://localhost:8081/api/v1/auth/.well-known/jwks.json}
+    issuer: ${JWT_ISSUER:logistics-auth}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.logistics.catalog: ${LOG_LEVEL:INFO}
+    org.springframework.security: WARN

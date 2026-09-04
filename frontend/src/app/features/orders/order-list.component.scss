@@ -1,0 +1,46 @@
+.orders { max-width: 68rem; margin: 0 auto; padding: 1rem; }
+.orders__head { display: flex; justify-content: space-between; align-items: center; }
+.orders__new {
+  background: #2c5f8a; color: #fff; padding: 0.45rem 0.9rem;
+  border-radius: 4px; text-decoration: none; font-size: 0.9rem;
+}
+
+.filters { display: flex; gap: 0.5rem; align-items: center; margin: 1rem 0; font-size: 0.9rem; }
+.filters select { padding: 0.4rem 0.6rem; border: 1px solid #c8d2dd; border-radius: 4px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th, td { text-align: left; padding: 0.6rem 0.5rem; border-bottom: 1px solid #e1e7ee; }
+th { font-size: 0.75rem; text-transform: uppercase; color: #5a6672; }
+td a { color: #2c5f8a; font-family: ui-monospace, monospace; }
+
+.empty { color: #5a6672; padding: 2rem 0; }
+
+.tag {
+  font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 10px;
+  background: #eef2f6; color: #5a6672;
+}
+.tag--split { background: #fff1d6; color: #8a5a00; }
+
+/* Status colour is data-driven, so a new status degrades to the neutral default
+   instead of silently rendering as something it is not. */
+.status {
+  font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.5rem;
+  border-radius: 10px; background: #eef2f6; color: #46525e;
+}
+.status[data-status='CONFIRMED'] { background: #e3f2e6; color: #256029; }
+.status[data-status='SHIPPED']   { background: #e2eefb; color: #1b4b7d; }
+.status[data-status='DELIVERED'] { background: #d7efdb; color: #17521f; }
+.status[data-status='CANCELLED'] { background: #f0f0f0; color: #666; }
+.status[data-status='REJECTED']  { background: #fdeaea; color: #96271b; }
+.status[data-status='ALLOCATED'] { background: #fff3d6; color: #7a5300; }
+
+.pager {
+  display: flex; gap: 1rem; align-items: center; justify-content: center;
+  margin-top: 1.5rem; font-size: 0.9rem;
+
+  button {
+    padding: 0.4rem 0.9rem; border: 1px solid #c8d2dd;
+    background: #fff; border-radius: 4px; cursor: pointer;
+  }
+  button:disabled { opacity: 0.45; cursor: default; }
+}

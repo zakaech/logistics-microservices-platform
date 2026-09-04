@@ -15,7 +15,7 @@ Java 17 · Spring Boot 3 · Spring Cloud Gateway · PostgreSQL · MongoDB · Ang
 | 1 | Repository skeleton, `auth-service`, `api-gateway`, Docker Compose | Done |
 | 2 | `catalog-service` (MongoDB) and `inventory-service` (stock, reservations) | Done |
 | 3 | `order-service`: allocation engine, saga, simulation endpoint | Done |
-| 4 | Angular front-end | Not started |
+| 4 | Angular front-end: auth, catalogue, cart, warehouse dashboard, order tracking | Done |
 
 
 ## Architecture in ten lines
@@ -128,7 +128,11 @@ logistics-platform/
 ├── docs/                    # design documentation (phase 0)
 ├── infrastructure/          # database initialisation scripts
 ├── api-gateway/             # routing, edge authentication, identity propagation
-└── auth-service/            # identity, roles, JWT issuance
+├── auth-service/            # identity, roles, JWT issuance
+├── catalog-service/         # products, categories, attribute schemas (MongoDB)
+├── inventory-service/       # warehouses, stock, movements, reservations
+├── order-service/           # orders and the warehouse allocation engine
+└── frontend/                # Angular application
 ```
 
 Each service follows the same layering: `controller` → `service` → `repository` → `domain`, with

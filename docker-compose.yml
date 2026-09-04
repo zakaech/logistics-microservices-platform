@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------------
-# Stack: PostgreSQL, MongoDB, auth-service, catalog-service,
-# inventory-service and api-gateway.
+# Stack: PostgreSQL, MongoDB, the four business services, the gateway
+# and the Angular front-end.
 #
 # Only the gateway publishes a port. Application services are reachable from
 # inside the network alone - and they still validate every token themselves,
@@ -218,6 +218,21 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
+    networks: [logistics-net]
+
+  frontend:
+    build:
+      # Context is the frontend directory: unlike the Java modules, it has no parent
+      # manifest to inherit from.
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: logistics-frontend
+    restart: unless-stopped
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    ports:
+      - "4200:80"
     networks: [logistics-net]
 
 volumes:

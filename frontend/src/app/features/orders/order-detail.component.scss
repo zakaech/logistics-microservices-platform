@@ -1,0 +1,67 @@
+.detail { max-width: 56rem; margin: 0 auto; padding: 1rem; }
+.detail__back { font-size: 0.85rem; color: #2c5f8a; }
+.detail__head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin: 1rem 0 1.5rem;
+}
+.detail__head h1 { margin: 0; font-family: ui-monospace, monospace; font-size: 1.4rem; }
+.detail__meta { margin: 0.3rem 0 0; font-size: 0.85rem; color: #5a6672; }
+
+section { margin-bottom: 2rem; }
+h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.03em;
+     color: #5a6672; border-bottom: 1px solid #e1e7ee; padding-bottom: 0.4rem; }
+
+.allocation__why { font-size: 0.95rem; }
+.allocation__why code {
+  background: #eef2f6; padding: 0.1rem 0.35rem; border-radius: 3px;
+  font-family: ui-monospace, monospace; font-size: 0.85rem;
+}
+
+.shipment {
+  border: 1px solid #e1e7ee; border-left: 3px solid #2c5f8a;
+  border-radius: 4px; padding: 0.75rem 1rem; margin-bottom: 0.75rem; background: #fbfcfd;
+
+  header { display: flex; justify-content: space-between; align-items: baseline; }
+  h3 { margin: 0; font-size: 0.95rem; }
+  ul { margin: 0.4rem 0 0; padding-left: 1.1rem; font-size: 0.9rem; }
+}
+.shipment__warehouse { font-family: ui-monospace, monospace; font-size: 0.85rem; color: #2c5f8a; }
+.shipment__reason { margin: 0.35rem 0 0; font-size: 0.85rem; color: #46525e; }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th, td { text-align: left; padding: 0.55rem 0.4rem; border-bottom: 1px solid #e1e7ee; }
+th { font-size: 0.75rem; text-transform: uppercase; color: #5a6672; }
+.sku { display: block; font-family: ui-monospace, monospace; font-size: 0.75rem; color: #5a6672; }
+.lines__note, .muted { font-size: 0.8rem; color: #5a6672; }
+
+address { font-style: normal; font-size: 0.92rem; line-height: 1.5; }
+
+.timeline ol { list-style: none; padding: 0; margin: 0; }
+.timeline li {
+  display: flex; gap: 0.75rem; align-items: baseline; flex-wrap: wrap;
+  padding: 0.4rem 0; border-bottom: 1px dotted #e1e7ee; font-size: 0.87rem;
+}
+.timeline__when { color: #5a6672; min-width: 9rem; font-variant-numeric: tabular-nums; }
+.timeline__what { font-weight: 600; }
+.timeline__why { color: #5a6672; font-style: italic; }
+
+.status {
+  font-size: 0.78rem; font-weight: 600; padding: 0.25rem 0.6rem;
+  border-radius: 12px; background: #eef2f6; color: #46525e;
+}
+.status[data-status='CONFIRMED'] { background: #e3f2e6; color: #256029; }
+.status[data-status='SHIPPED']   { background: #e2eefb; color: #1b4b7d; }
+.status[data-status='DELIVERED'] { background: #d7efdb; color: #17521f; }
+.status[data-status='CANCELLED'] { background: #f0f0f0; color: #666; }
+.status[data-status='REJECTED']  { background: #fdeaea; color: #96271b; }
+.status[data-status='ALLOCATED'] { background: #fff3d6; color: #7a5300; }
+
+.actions { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center;
+
+  button {
+    padding: 0.55rem 1rem; border: 1px solid #c8d2dd; background: #fff;
+    border-radius: 4px; cursor: pointer; font-weight: 600; color: #2c5f8a;
+  }
+  button.danger { color: #c0392b; border-color: #f0b4b4; }
+  button:disabled { opacity: 0.5; cursor: default; }
+}

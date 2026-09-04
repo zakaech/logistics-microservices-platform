@@ -1,0 +1,87 @@
+<section class="catalog">
+  <header class="catalog__head">
+    <h1>Catalogue</h1>
+    @if (cart.count() > 0) {
+      <a class="catalog__cart" routerLink="/orders/new">
+        Basket · {{ cart.count() }}
+      </a>
+    }
+  </header>
+
+  <form class="filters" (ngSubmit)="search()">
+    <input
+      type="search"
+      name="q"
+      placeholder="Search by name, brand or description"
+      [(ngModel)]="searchTerm"
+      aria-label="Search products"
+    />
+
+    <select name="category" [(ngModel)]="selectedCategoryId" (change)="search()"
+            aria-label="Filter by category">
+      <option value="">All categories</option>
+      @for (category of flatCategories(); track category.id) {
+        <option [value]="category.id">{{ category.label }}</option>
+      }
+    </select>
+
+    <button type="submit">Search</button>
+    <button type="button" class="ghost" (click)="clearFilters()">Reset</button>
+  </form>
+
+  <app-loading-bar [loading]="products.loading()" label="Loading products…" />
+  <app-problem-alert [problem]="products.error()" />
+
+  @if (products.data(); as result) {
+    @if (result.content.length === 0) {
+      <p class="empty">
+        No product matches these filters.
+        @if (searchTerm || selectedCategoryId) {
+          <button type="button" class="link" (click)="clearFilters()">Clear them</button>
+        }
+      </p>
+    } @else {
+      <p class="count">{{ result.totalElements }} product(s)</p>
+
+      <ul class="grid">
+        @for (product of result.content; track product.id) {
+          <li class="card">
+            @if (product.primaryImage) {
+              <img class="card__image" [src]="product.primaryImage" [alt]="product.name" />
+            } @else {
+              <div class="card__image card__image--empty" aria-hidden="true"></div>
+            }
+
+            <div class="card__body">
+              <h2 class="card__name">{{ product.name }}</h2>
+              <p class="card__meta">
+                <span class="card__sku">{{ product.sku }}</span>
+                @if (product.brand) { · {{ product.brand }} }
+              </p>
+              <p class="card__path">{{ product.categoryPath }}</p>
+              <p class="card__price">
+                {{ product.price.amount | currency: product.price.currency }}
+              </p>
+            </div>
+
+            <button type="button" class="card__add" (click)="addToCart(product)">
+              @if (justAdded() === product.id) { Added } @else { Add to basket }
+            </button>
+          </li>
+        }
+      </ul>
+
+      @if (result.totalPages > 1) {
+        <nav class="pager" aria-label="Pagination">
+          <button type="button" [disabled]="result.first" (click)="goToPage(page() - 1)">
+            Previous
+          </button>
+          <span>Page {{ result.page + 1 }} of {{ result.totalPages }}</span>
+          <button type="button" [disabled]="result.last" (click)="goToPage(page() + 1)">
+            Next
+          </button>
+        </nav>
+      }
+    }
+  }
+</section>

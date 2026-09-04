@@ -1,0 +1,68 @@
+<section class="orders">
+  <header class="orders__head">
+    <h1>Orders</h1>
+    <a class="orders__new" routerLink="/catalog">New order</a>
+  </header>
+
+  <div class="filters">
+    <label for="status">Status</label>
+    <select id="status" [(ngModel)]="selectedStatus" (change)="load()">
+      <option value="">All</option>
+      @for (status of statuses; track status) {
+        <option [value]="status">{{ status }}</option>
+      }
+    </select>
+  </div>
+
+  <app-loading-bar [loading]="result.loading()" label="Loading orders…" />
+  <app-problem-alert [problem]="result.error()" />
+
+  @if (result.data(); as pageData) {
+    @if (pageData.content.length === 0) {
+      <p class="empty">No order matches this filter.</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Order</th>
+            <th scope="col">Placed</th>
+            <th scope="col">Lines</th>
+            <th scope="col">Total</th>
+            <th scope="col">Shipments</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (order of pageData.content; track order.id) {
+            <tr>
+              <td><a [routerLink]="['/orders', order.id]">{{ order.orderNumber }}</a></td>
+              <td>{{ order.createdAt | date: 'short' }}</td>
+              <td>{{ order.lineCount }}</td>
+              <td>{{ order.totalAmount | currency: order.currency }}</td>
+              <td>
+                @if (order.splitShipment) {
+                  <span class="tag tag--split">Split</span>
+                } @else {
+                  <span class="tag">Single</span>
+                }
+              </td>
+              <td><span class="status" [attr.data-status]="order.status">{{ order.status }}</span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      @if (pageData.totalPages > 1) {
+        <nav class="pager" aria-label="Pagination">
+          <button type="button" [disabled]="pageData.first" (click)="goToPage(page() - 1)">
+            Previous
+          </button>
+          <span>Page {{ pageData.page + 1 }} of {{ pageData.totalPages }}</span>
+          <button type="button" [disabled]="pageData.last" (click)="goToPage(page() + 1)">
+            Next
+          </button>
+        </nav>
+      }
+    }
+  }
+</section>

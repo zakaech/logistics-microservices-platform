@@ -1,0 +1,138 @@
+<section class="detail">
+  <a class="detail__back" routerLink="/orders">Back to orders</a>
+
+  <app-loading-bar [loading]="order.loading()" label="Loading order…" />
+  <app-problem-alert [problem]="order.error()" />
+
+  @if (order.data(); as o) {
+    <header class="detail__head">
+      <div>
+        <h1>{{ o.orderNumber }}</h1>
+        <p class="detail__meta">
+          Placed {{ o.createdAt | date: 'medium' }} ·
+          {{ o.totalAmount | currency: o.currency }}
+        </p>
+      </div>
+      <span class="status" [attr.data-status]="o.status">{{ o.status }}</span>
+    </header>
+
+    <!-- Why this order ships the way it does. -->
+    <section class="allocation">
+      <h2>Fulfilment</h2>
+
+      @if (o.allocations.length === 0) {
+        <p class="muted">
+          @if (o.status === 'REJECTED') {
+            No warehouse combination could serve this order, so nothing was allocated.
+          } @else {
+            Not allocated yet.
+          }
+        </p>
+      } @else {
+        <p class="allocation__why">
+          @if (o.splitShipment) {
+            Split across <strong>{{ o.allocations.length }}</strong> warehouses
+          } @else {
+            Shipped whole from <strong>{{ o.allocations[0].warehouseCode }}</strong>
+          }
+          @if (o.allocationStrategy) {
+            by the <code>{{ o.allocationStrategy }}</code> strategy.
+          }
+        </p>
+
+        @for (allocation of o.allocations; track allocation.warehouseId) {
+          <article class="shipment">
+            <header>
+              <h3>Shipment {{ allocation.shipmentSequence }}</h3>
+              <span class="shipment__warehouse">{{ allocation.warehouseCode }}</span>
+            </header>
+            <p class="shipment__reason">
+              Chosen at <strong>{{ allocation.distanceKm | number: '1.0-2' }} km</strong>
+              from the delivery address — the distance the engine used to decide.
+            </p>
+            <ul>
+              @for (line of allocation.lines; track line.productId) {
+                <li>{{ line.quantity }} × {{ productName(o, line.productId) }}</li>
+              }
+            </ul>
+          </article>
+        }
+      }
+    </section>
+
+    <section class="lines">
+      <h2>Lines</h2>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Product</th>
+            <th scope="col">Unit price</th>
+            <th scope="col">Qty</th>
+            <th scope="col">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (line of o.lines; track line.id) {
+            <tr>
+              <td>
+                <strong>{{ line.name }}</strong>
+                <span class="sku">{{ line.sku }}</span>
+              </td>
+              <td>{{ line.unitPrice | currency: line.currency }}</td>
+              <td>{{ line.quantity }}</td>
+              <td>{{ line.lineTotal | currency: line.currency }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <p class="lines__note">
+        Prices are those recorded when the order was placed, not today's catalogue prices.
+      </p>
+    </section>
+
+    <section class="delivery">
+      <h2>Delivery address</h2>
+      <address>
+        {{ o.deliveryAddress.line1 }}<br />
+        {{ o.deliveryAddress.postalCode }} {{ o.deliveryAddress.city }},
+        {{ o.deliveryAddress.country }}
+      </address>
+    </section>
+
+    @if (history().length > 0) {
+      <section class="timeline">
+        <h2>Timeline</h2>
+        <ol>
+          @for (entry of history(); track entry.changedAt) {
+            <li>
+              <span class="timeline__when">{{ entry.changedAt | date: 'short' }}</span>
+              <span class="timeline__what">
+                @if (entry.fromStatus) { {{ entry.fromStatus }} → }{{ entry.toStatus }}
+              </span>
+              @if (entry.reason) {
+                <span class="timeline__why">{{ entry.reason }}</span>
+              }
+            </li>
+          }
+        </ol>
+      </section>
+    }
+
+    <section class="actions">
+      <app-loading-bar [loading]="acting()" label="Updating…" />
+      <app-problem-alert [problem]="actionError()" />
+
+      @if (canCancel(o)) {
+        <button type="button" class="danger" [disabled]="acting()" (click)="cancel()">
+          Cancel order
+        </button>
+      }
+      @if (canShip(o)) {
+        <button type="button" [disabled]="acting()" (click)="ship()">Mark as shipped</button>
+      }
+      @if (canDeliver(o)) {
+        <button type="button" [disabled]="acting()" (click)="deliver()">Mark as delivered</button>
+      }
+    </section>
+  }
+</section>

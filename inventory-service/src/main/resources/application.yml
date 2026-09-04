@@ -1,0 +1,81 @@
+# ---------------------------------------------------------------------------
+# inventory-service
+#
+# Owns warehouses, stock levels, the movement ledger and reservations.
+# Stock is the most contended resource on the platform, which is why the
+# reservation path uses pessimistic locking (see ReservationServiceImpl).
+# ---------------------------------------------------------------------------
+server:
+  port: ${SERVER_PORT:8083}
+  error:
+    include-stacktrace: never
+
+spring:
+  application:
+    name: inventory-service
+
+  datasource:
+    url: ${INVENTORY_DB_URL:jdbc:postgresql://localhost:5432/inventory_db}
+    username: ${INVENTORY_DB_USER:inventory_user}
+    password: ${INVENTORY_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 5000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: inventory
+        jdbc:
+          time_zone: UTC
+        # Fail fast instead of waiting forever behind a row lock: a reservation that
+        # cannot get its locks quickly should return 409, not hold a connection.
+        javax.persistence.lock.timeout: 3000
+
+  flyway:
+    enabled: true
+    schemas: inventory
+    default-schema: inventory
+    create-schemas: true
+    locations: classpath:db/migration
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+security:
+  jwt:
+    jwk-set-uri: ${JWK_SET_URI:http://localhost:8081/api/v1/auth/.well-known/jwks.json}
+    issuer: ${JWT_ISSUER:logistics-auth}
+
+logistics:
+  reservation:
+    # How long a reservation holds stock before the sweeper releases it. Long enough for
+    # order-service to confirm, short enough that a crash does not strand stock for hours.
+    default-ttl: ${RESERVATION_TTL:PT5M}
+    expiry-sweep-cron: ${RESERVATION_SWEEP_CRON:0 */1 * * * *}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.logistics.inventory: ${LOG_LEVEL:INFO}
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN

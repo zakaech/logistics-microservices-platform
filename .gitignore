@@ -1,0 +1,28 @@
+# Build output
+target/
+dist/
+build/
+
+# Node / Angular
+node_modules/
+.angular/
+
+# Secrets and local configuration - NEVER commit
+.env
+*.pem
+*.key
+!.env.example
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/

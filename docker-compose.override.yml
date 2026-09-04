@@ -1,0 +1,23 @@
+# ---------------------------------------------------------------------------
+# Local development only. Docker Compose merges this file automatically, so
+# `docker compose up` picks it up and `docker compose -f docker-compose.yml up`
+# does not.
+#
+# It publishes ports the production topology keeps internal, so you can reach a
+# database with a SQL client or hit a service directly while debugging.
+# ---------------------------------------------------------------------------
+services:
+
+  postgres:
+    ports:
+      - "5432:5432"
+
+  mongodb:
+    ports:
+      - "27017:27017"
+
+  auth-service:
+    ports:
+      - "8081:8081"
+    environment:
+      LOG_LEVEL: DEBUG

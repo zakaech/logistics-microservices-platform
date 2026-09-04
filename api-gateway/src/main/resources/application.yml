@@ -1,0 +1,48 @@
+# ---------------------------------------------------------------------------
+# api-gateway - the only backend port published to the host.
+#
+# Routes are declared in RouteConfig; only the addresses live here, so the same
+# jar runs against localhost in development and Docker DNS names in a stack.
+# ---------------------------------------------------------------------------
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-stacktrace: never
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      httpclient:
+        connect-timeout: 2000
+        response-timeout: 5s
+
+gateway:
+  services:
+    auth: ${AUTH_SERVICE_URI:http://localhost:8081}
+    catalog: ${CATALOG_SERVICE_URI:http://localhost:8082}
+    inventory: ${INVENTORY_SERVICE_URI:http://localhost:8083}
+    order: ${ORDER_SERVICE_URI:http://localhost:8084}
+
+  # The gateway holds no signing key: it fetches the public ones from auth-service.
+  jwk-set-uri: ${JWK_SET_URI:http://localhost:8081/api/v1/auth/.well-known/jwks.json}
+  issuer: ${JWT_ISSUER:logistics-auth}
+
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
+logging:
+  level:
+    com.logistics.gateway: ${LOG_LEVEL:INFO}
+    org.springframework.cloud.gateway: WARN

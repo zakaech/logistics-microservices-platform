@@ -1,0 +1,229 @@
+# ---------------------------------------------------------------------------
+# Stack: PostgreSQL, MongoDB, auth-service, catalog-service,
+# inventory-service and api-gateway.
+#
+# Only the gateway publishes a port. Application services are reachable from
+# inside the network alone - and they still validate every token themselves,
+# because network isolation is a deployment detail, not a security guarantee.
+#
+#   cp .env.example .env   # then edit it
+#   docker compose up --build
+# ---------------------------------------------------------------------------
+name: logistics-platform
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: logistics-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      AUTH_DB_NAME: ${AUTH_DB_NAME}
+      AUTH_DB_USER: ${AUTH_DB_USER}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD}
+      INVENTORY_DB_NAME: ${INVENTORY_DB_NAME}
+      INVENTORY_DB_USER: ${INVENTORY_DB_USER}
+      INVENTORY_DB_PASSWORD: ${INVENTORY_DB_PASSWORD}
+      ORDER_DB_NAME: ${ORDER_DB_NAME}
+      ORDER_DB_USER: ${ORDER_DB_USER}
+      ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
+    volumes:
+      # Runs only on first initialisation of the volume. It creates all three
+      # service databases now so a later phase never needs `down -v`.
+      - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d:ro
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [logistics-net]
+
+  mongodb:
+    image: mongo:7
+    container_name: logistics-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${CATALOG_DB_NAME}
+      CATALOG_DB_NAME: ${CATALOG_DB_NAME}
+      CATALOG_DB_USER: ${CATALOG_DB_USER}
+      CATALOG_DB_PASSWORD: ${CATALOG_DB_PASSWORD}
+    volumes:
+      - ./infrastructure/mongo/init:/docker-entrypoint-initdb.d:ro
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [logistics-net]
+
+  auth-service:
+    build:
+      # Context is the repository root: the module needs the parent pom.
+      context: .
+      dockerfile: auth-service/Dockerfile
+    container_name: logistics-auth-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8081
+      AUTH_DB_URL: jdbc:postgresql://postgres:5432/${AUTH_DB_NAME}
+      AUTH_DB_USER: ${AUTH_DB_USER}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_KEY_ID: ${JWT_KEY_ID}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL}
+      # Empty is allowed: the service then generates an ephemeral key pair and
+      # logs a warning. Set both for anything beyond local development.
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:-}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:-}
+      ORDER_SERVICE_CLIENT_SECRET: ${ORDER_SERVICE_CLIENT_SECRET}
+      BOOTSTRAP_ADMIN_ENABLED: ${BOOTSTRAP_ADMIN_ENABLED}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    networks: [logistics-net]
+
+  catalog-service:
+    build:
+      context: .
+      dockerfile: catalog-service/Dockerfile
+    container_name: logistics-catalog-service
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8082
+      CATALOG_MONGO_URI: mongodb://${CATALOG_DB_USER}:${CATALOG_DB_PASSWORD}@mongodb:27017/${CATALOG_DB_NAME}?authSource=${CATALOG_DB_NAME}
+      JWK_SET_URI: http://auth-service:8081/api/v1/auth/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    networks: [logistics-net]
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: inventory-service/Dockerfile
+    container_name: logistics-inventory-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8083
+      INVENTORY_DB_URL: jdbc:postgresql://postgres:5432/${INVENTORY_DB_NAME}
+      INVENTORY_DB_USER: ${INVENTORY_DB_USER}
+      INVENTORY_DB_PASSWORD: ${INVENTORY_DB_PASSWORD}
+      JWK_SET_URI: http://auth-service:8081/api/v1/auth/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER}
+      RESERVATION_TTL: ${RESERVATION_TTL:-PT5M}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    networks: [logistics-net]
+
+  order-service:
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    container_name: logistics-order-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      catalog-service:
+        condition: service_healthy
+      inventory-service:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8084
+      ORDER_DB_URL: jdbc:postgresql://postgres:5432/${ORDER_DB_NAME}
+      ORDER_DB_USER: ${ORDER_DB_USER}
+      ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
+      JWK_SET_URI: http://auth-service:8081/api/v1/auth/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER}
+      # Outbound calls go through the gateway, as decided in phase 0.
+      GATEWAY_URI: http://api-gateway:8080
+      ORDER_SERVICE_CLIENT_SECRET: ${ORDER_SERVICE_CLIENT_SECRET}
+      ALLOCATION_DEFAULT_STRATEGY: ${ALLOCATION_DEFAULT_STRATEGY:-nearest}
+      RESERVATION_TTL_SECONDS: ${RESERVATION_TTL_SECONDS:-300}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8084/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    networks: [logistics-net]
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    container_name: logistics-api-gateway
+    restart: unless-stopped
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      catalog-service:
+        condition: service_healthy
+      inventory-service:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      AUTH_SERVICE_URI: http://auth-service:8081
+      CATALOG_SERVICE_URI: http://catalog-service:8082
+      INVENTORY_SERVICE_URI: http://inventory-service:8083
+      # order-service arrives in phase 4; until then this route answers 503 at call
+      # time rather than preventing the gateway from starting.
+      ORDER_SERVICE_URI: http://order-service:8084
+      JWK_SET_URI: http://auth-service:8081/api/v1/auth/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks: [logistics-net]
+
+volumes:
+  postgres-data:
+  mongo-data:
+
+networks:
+  logistics-net:
+    driver: bridge

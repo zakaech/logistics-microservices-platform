@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
                 .toList();
 
         ProblemDetail problem = build(HttpStatus.BAD_REQUEST, ProblemTypes.VALIDATION_FAILED,
-                "Validation failed", "One or more fields are invalid.", request);
+                "Échec de la validation", "Un ou plusieurs champs sont invalides.", request);
         problem.setProperty("errors", violations);
         return problem;
     }
@@ -47,49 +47,49 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleUnreadableBody(HttpMessageNotReadableException exception,
                                               HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ProblemTypes.MALFORMED_REQUEST,
-                "Malformed request", "The request body could not be parsed.", request);
+                "Requête malformée", "Le corps de la requête n'a pas pu être analysé.", request);
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)
     public ProblemDetail handleInvalidCredentials(InvalidCredentialsException exception,
                                                   HttpServletRequest request) {
         return build(HttpStatus.UNAUTHORIZED, ProblemTypes.INVALID_CREDENTIALS,
-                "Authentication failed", exception.getMessage(), request);
+                "Échec de l'authentification", exception.getMessage(), request);
     }
 
     @ExceptionHandler(InvalidTokenException.class)
     public ProblemDetail handleInvalidToken(InvalidTokenException exception,
                                             HttpServletRequest request) {
         return build(HttpStatus.UNAUTHORIZED, ProblemTypes.INVALID_TOKEN,
-                "Invalid token", exception.getMessage(), request);
+                "Jeton invalide", exception.getMessage(), request);
     }
 
     @ExceptionHandler(EmailAlreadyUsedException.class)
     public ProblemDetail handleEmailAlreadyUsed(EmailAlreadyUsedException exception,
                                                 HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, ProblemTypes.EMAIL_ALREADY_USED,
-                "Email already used", exception.getMessage(), request);
+                "Email déjà utilisé", exception.getMessage(), request);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ProblemDetail handleNotFound(ResourceNotFoundException exception,
                                         HttpServletRequest request) {
         return build(HttpStatus.NOT_FOUND, ProblemTypes.RESOURCE_NOT_FOUND,
-                "Resource not found", exception.getMessage(), request);
+                "Ressource introuvable", exception.getMessage(), request);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ProblemDetail handleAccessDenied(AccessDeniedException exception,
                                             HttpServletRequest request) {
         return build(HttpStatus.FORBIDDEN, ProblemTypes.ACCESS_DENIED,
-                "Access denied", "Your roles do not allow this operation.", request);
+                "Accès refusé", "Vos rôles ne permettent pas cette opération.", request);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleIllegalArgument(IllegalArgumentException exception,
                                                HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ProblemTypes.MALFORMED_REQUEST,
-                "Invalid request", exception.getMessage(), request);
+                "Requête invalide", exception.getMessage(), request);
     }
 
     /**
@@ -101,7 +101,7 @@ public class GlobalExceptionHandler {
         log.error("Unhandled exception on {} {}", request.getMethod(), request.getRequestURI(),
                 exception);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, ProblemTypes.INTERNAL_ERROR,
-                "Internal error", "An unexpected error occurred.", request);
+                "Erreur interne", "Une erreur inattendue s'est produite.", request);
     }
 
     private ProblemDetail build(HttpStatus status, URI type, String title, String detail,

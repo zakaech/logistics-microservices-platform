@@ -15,16 +15,16 @@ import java.util.UUID;
  */
 public record UpsertStockItemRequest(
 
-        @NotNull(message = "warehouseId is required")
+        @NotNull(message = "warehouseId est obligatoire")
         UUID warehouseId,
 
-        @NotBlank(message = "productId is required")
+        @NotBlank(message = "productId est obligatoire")
         String productId,
 
-        @NotNull(message = "quantityOnHand is required")
-        @Min(value = 0, message = "quantityOnHand must be zero or more")
+        @NotNull(message = "quantityOnHand est obligatoire")
+        @Min(value = 0, message = "quantityOnHand doit être supérieur ou égal à zéro")
         Integer quantityOnHand,
 
-        @Min(value = 0, message = "reorderThreshold must be zero or more")
+        @Min(value = 0, message = "reorderThreshold doit être supérieur ou égal à zéro")
         Integer reorderThreshold) {
 }

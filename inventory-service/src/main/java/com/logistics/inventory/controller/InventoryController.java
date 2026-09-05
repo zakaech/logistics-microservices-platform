@@ -35,7 +35,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/inventory")
 @RequiredArgsConstructor
-@Tag(name = "Inventory", description = "Availability snapshot and the reservation protocol")
+@Tag(name = "Inventory", description = "Instantané de disponibilité et protocole de réservation")
 public class InventoryController {
 
     private final StockService stockService;
@@ -43,7 +43,7 @@ public class InventoryController {
 
     @PostMapping("/availability")
     @PreAuthorize("hasAnyRole('SERVICE', 'WAREHOUSE_MANAGER', 'ADMIN')")
-    @Operation(summary = "Stock and warehouse coordinates for a set of products, in one call")
+    @Operation(summary = "Stock et coordonnées des entrepôts pour un ensemble de produits, en un seul appel")
     public AvailabilityResponse availability(@Valid @RequestBody AvailabilityRequest request) {
         return stockService.availability(request);
     }
@@ -57,7 +57,7 @@ public class InventoryController {
      */
     @PostMapping("/reservations")
     @PreAuthorize("hasRole('SERVICE')")
-    @Operation(summary = "Reserve stock; idempotent on the reference")
+    @Operation(summary = "Réserver du stock ; idempotent sur la référence")
     public ResponseEntity<ReservationResponse> reserve(
             @Valid @RequestBody CreateReservationRequest request) {
         ReservationService.ReservationResult result = reservationService.reserve(request);
@@ -73,20 +73,20 @@ public class InventoryController {
 
     @GetMapping("/reservations/{id}")
     @PreAuthorize("hasAnyRole('SERVICE', 'ADMIN')")
-    @Operation(summary = "Fetch a reservation")
+    @Operation(summary = "Consulter une réservation")
     public ReservationResponse getById(@PathVariable UUID id) {
         return reservationService.findById(id);
     }
 
     @GetMapping("/reservations")
     @PreAuthorize("hasAnyRole('SERVICE', 'ADMIN')")
-    @Operation(summary = "Fetch a reservation by order number")
+    @Operation(summary = "Consulter une réservation par numéro de commande")
     public ReservationResponse getByReference(@RequestParam String reference) {
         return reservationService.findByReference(reference);
     }
 
     @PostMapping("/reservations/{id}/confirm")
-    @Operation(summary = "Ship the held units: on-hand drops and an OUTBOUND movement is recorded")
+    @Operation(summary = "Expédier les unités réservées : le stock physique diminue et un mouvement OUTBOUND est enregistré")
     @PreAuthorize("hasRole('SERVICE')")
     public ReservationResponse confirm(@PathVariable UUID id) {
         return reservationService.confirm(id);
@@ -95,7 +95,7 @@ public class InventoryController {
     @PostMapping("/reservations/{id}/cancel")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAnyRole('SERVICE', 'ADMIN')")
-    @Operation(summary = "Compensating action of the saga: give the held units back")
+    @Operation(summary = "Action compensatoire de la saga : restituer les unités réservées")
     public ReservationResponse cancel(@PathVariable UUID id) {
         return reservationService.cancel(id);
     }

@@ -56,7 +56,7 @@ public class UserServiceImpl implements UserService {
         Set<Role> roles = roleRepository.findByNameIn(roleNames);
 
         if (roles.size() != roleNames.size()) {
-            throw new IllegalArgumentException("One or more roles do not exist: " + roleNames);
+            throw new IllegalArgumentException("Un ou plusieurs rôles n'existent pas : " + roleNames);
         }
 
         user.replaceRoles(roles);
@@ -89,6 +89,6 @@ public class UserServiceImpl implements UserService {
 
     private User loadUser(UUID id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", id));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", id));
     }
 }

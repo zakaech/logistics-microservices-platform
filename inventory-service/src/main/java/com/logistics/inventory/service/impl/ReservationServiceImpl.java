@@ -171,7 +171,7 @@ public class ReservationServiceImpl implements ReservationService {
      */
     private ReservationResponse settle(UUID id, ReservationStatus target) {
         Reservation reservation = reservationRepository.findByIdWithLines(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Reservation", id));
+                .orElseThrow(() -> new ResourceNotFoundException("Réservation", id));
 
         if (reservation.getStatus() != ReservationStatus.ACTIVE) {
             throw new InvalidReservationStateException(reservation.getReference(),
@@ -196,14 +196,14 @@ public class ReservationServiceImpl implements ReservationService {
     @Transactional(readOnly = true)
     public ReservationResponse findById(UUID id) {
         return inventoryMapper.toResponse(reservationRepository.findByIdWithLines(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Reservation", id)));
+                .orElseThrow(() -> new ResourceNotFoundException("Réservation", id)));
     }
 
     @Override
     @Transactional(readOnly = true)
     public ReservationResponse findByReference(String reference) {
         return inventoryMapper.toResponse(reservationRepository.findByReferenceWithLines(reference)
-                .orElseThrow(() -> new ResourceNotFoundException("Reservation", reference)));
+                .orElseThrow(() -> new ResourceNotFoundException("Réservation", reference)));
     }
 
     /**

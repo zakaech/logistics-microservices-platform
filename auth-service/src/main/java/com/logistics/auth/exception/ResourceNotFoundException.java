@@ -4,6 +4,6 @@ package com.logistics.auth.exception;
 public class ResourceNotFoundException extends RuntimeException {
 
     public ResourceNotFoundException(String resource, Object identifier) {
-        super(resource + " '" + identifier + "' was not found.");
+        super(resource + " '" + identifier + "' est introuvable.");
     }
 }

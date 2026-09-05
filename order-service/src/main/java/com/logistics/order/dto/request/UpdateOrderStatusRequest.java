@@ -7,9 +7,9 @@ import jakarta.validation.constraints.Size;
 /** Warehouse-driven progress: SHIPPED, then DELIVERED. */
 public record UpdateOrderStatusRequest(
 
-        @NotNull(message = "status is required")
+        @NotNull(message = "status est obligatoire")
         OrderStatus status,
 
-        @Size(max = 255, message = "reason must not exceed 255 characters")
+        @Size(max = 255, message = "reason ne doit pas dépasser 255 caractères")
         String reason) {
 }

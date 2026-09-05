@@ -167,7 +167,7 @@ public class Order {
                 .order(this)
                 .fromStatus(null)
                 .toStatus(status)
-                .reason("Order created")
+                .reason("Commande créée")
                 .changedBy(changedBy)
                 .changedAt(now)
                 .build());

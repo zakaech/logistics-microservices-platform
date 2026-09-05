@@ -10,19 +10,19 @@ import java.util.List;
 
 public record CreateCategoryRequest(
 
-        @NotBlank(message = "name is required")
-        @Size(min = 2, max = 80, message = "name must be between 2 and 80 characters")
+        @NotBlank(message = "name est obligatoire")
+        @Size(min = 2, max = 80, message = "name doit comporter entre 2 et 80 caractères")
         String name,
 
-        @NotBlank(message = "slug is required")
+        @NotBlank(message = "slug est obligatoire")
         @Pattern(regexp = "^[a-z0-9]+(-[a-z0-9]+)*$",
-                message = "slug must be lowercase words separated by single hyphens")
-        @Size(max = 60, message = "slug must not exceed 60 characters")
+                message = "slug doit être composé de mots en minuscules séparés par un seul tiret")
+        @Size(max = 60, message = "slug ne doit pas dépasser 60 caractères")
         String slug,
 
         /* Null means a root category. */
         String parentId,
 
-        @Size(max = 30, message = "at most 30 attributes per category")
+        @Size(max = 30, message = "30 attributs au maximum par catégorie")
         List<@Valid AttributeDefinitionDto> attributeSchema) {
 }

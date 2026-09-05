@@ -13,7 +13,7 @@ import java.util.Set;
  */
 public record ProductBatchRequest(
 
-        @NotEmpty(message = "productIds must contain at least one id")
-        @Size(max = 100, message = "at most 100 productIds per request")
+        @NotEmpty(message = "productIds doit contenir au moins un identifiant")
+        @Size(max = 100, message = "100 productIds au maximum par requête")
         Set<String> productIds) {
 }

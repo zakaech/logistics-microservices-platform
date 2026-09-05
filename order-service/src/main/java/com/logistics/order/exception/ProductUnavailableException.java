@@ -14,7 +14,7 @@ public class ProductUnavailableException extends RuntimeException {
     private final transient List<UnavailableProduct> products;
 
     public ProductUnavailableException(List<UnavailableProduct> products) {
-        super("Some products are unknown or discontinued.");
+        super("Certains produits sont inconnus ou retirés du catalogue.");
         this.products = List.copyOf(products);
     }
 

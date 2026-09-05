@@ -21,31 +21,31 @@ import java.util.Map;
  */
 public record CreateProductRequest(
 
-        @NotBlank(message = "sku is required")
+        @NotBlank(message = "sku est obligatoire")
         @Pattern(regexp = "^[A-Z0-9-]{3,32}$",
-                message = "sku must be 3 to 32 characters of A-Z, 0-9 or hyphen")
+                message = "sku doit comporter de 3 à 32 caractères parmi A-Z, 0-9 ou le tiret")
         String sku,
 
-        @NotBlank(message = "name is required")
-        @Size(min = 3, max = 160, message = "name must be between 3 and 160 characters")
+        @NotBlank(message = "name est obligatoire")
+        @Size(min = 3, max = 160, message = "name doit comporter entre 3 et 160 caractères")
         String name,
 
-        @Size(max = 4000, message = "description must not exceed 4000 characters")
+        @Size(max = 4000, message = "description ne doit pas dépasser 4000 caractères")
         String description,
 
-        @Size(max = 80, message = "brand must not exceed 80 characters")
+        @Size(max = 80, message = "brand ne doit pas dépasser 80 caractères")
         String brand,
 
-        @NotBlank(message = "categoryId is required")
+        @NotBlank(message = "categoryId est obligatoire")
         String categoryId,
 
-        @NotNull(message = "price is required")
+        @NotNull(message = "price est obligatoire")
         @Valid MoneyDto price,
 
         Map<String, String> attributes,
 
         @Valid DimensionsDto dimensions,
 
-        @Size(max = 10, message = "at most 10 images are allowed")
-        List<@Pattern(regexp = "^https?://.+", message = "each image must be an http(s) URL") String> images) {
+        @Size(max = 10, message = "10 images au maximum")
+        List<@Pattern(regexp = "^https?://.+", message = "chaque image doit être une URL http(s)") String> images) {
 }

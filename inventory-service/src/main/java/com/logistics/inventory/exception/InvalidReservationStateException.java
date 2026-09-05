@@ -15,8 +15,8 @@ public class InvalidReservationStateException extends RuntimeException {
 
     public InvalidReservationStateException(String reference, ReservationStatus currentStatus,
                                             String attemptedAction) {
-        super("Reservation '" + reference + "' is " + currentStatus
-                + " and cannot be " + attemptedAction + ".");
+        super("La réservation '" + reference + "' est " + currentStatus
+                + " et ne peut pas être " + attemptedAction + ".");
         this.currentStatus = currentStatus;
     }
 

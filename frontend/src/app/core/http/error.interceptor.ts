@@ -42,10 +42,11 @@ export function toProblemDetail(error: HttpErrorResponse): ProblemDetail {
   if (error.status === 0) {
     return {
       type: 'about:client',
-      title: 'Network unreachable',
+      title: 'Serveur injoignable',
       status: 0,
       detail:
-        'The server could not be reached. Check your connection and whether the platform is running.',
+        "Le serveur n'a pas pu être contacté. Vérifiez votre connexion et que la " +
+        'plateforme est démarrée.',
     };
   }
 
@@ -58,7 +59,7 @@ export function toProblemDetail(error: HttpErrorResponse): ProblemDetail {
   // A non-problem+json error body: keep whatever the server said rather than inventing a message.
   return {
     type: 'about:blank',
-    title: error.statusText || 'Request failed',
+    title: error.statusText || 'Échec de la requête',
     status: error.status,
     detail: typeof body === 'string' && body ? body : error.message,
   };

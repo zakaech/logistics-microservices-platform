@@ -27,20 +27,20 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
-@Tag(name = "Allocation", description = "Simulate the allocation engine without placing an order")
+@Tag(name = "Allocation", description = "Simuler le moteur d'affectation sans créer de commande")
 public class AllocationPreviewController {
 
     private final AllocationPreviewService previewService;
 
     @PostMapping("/allocation-preview")
     @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER', 'ADMIN')")
-    @Operation(summary = "Run one or more strategies against live stock, changing nothing")
+    @Operation(summary = "Exécuter une ou plusieurs stratégies sur le stock réel, sans rien modifier")
     public AllocationPreviewResponse preview(@Valid @RequestBody AllocationPreviewRequest request) {
         return previewService.preview(request);
     }
 
     @GetMapping("/allocation-strategies")
-    @Operation(summary = "The strategies a caller may ask for, and which one is the default")
+    @Operation(summary = "Les stratégies disponibles et celle appliquée par défaut")
     public List<AllocationStrategyResponse> strategies() {
         return previewService.availableStrategies();
     }

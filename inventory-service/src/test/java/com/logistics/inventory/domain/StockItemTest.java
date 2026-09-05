@@ -57,7 +57,7 @@ class StockItemTest {
             assertThat(item.canReserve(3)).isFalse();
             assertThatThrownBy(() -> item.reserve(3))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("only 2 available");
+                    .hasMessageContaining("seulement 2 disponible");
         }
 
         @Test
@@ -112,7 +112,7 @@ class StockItemTest {
             item.reserve(8);
             assertThatThrownBy(() -> item.adjust(-5))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("unbacked by physical stock");
+                    .hasMessageContaining("sans stock physique");
         }
 
         @Test

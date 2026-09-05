@@ -36,14 +36,14 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@Tag(name = "Authentication", description = "Registration, login, token issuance and validation")
+@Tag(name = "Authentication", description = "Inscription, connexion, émission et validation des jetons")
 public class AuthController {
 
     private final AuthenticationService authenticationService;
     private final RSAKey rsaSigningKey;
 
     @PostMapping("/register")
-    @Operation(summary = "Register a new account, always with ROLE_CLIENT")
+    @Operation(summary = "Créer un compte ; le rôle ROLE_CLIENT est toujours imposé par le serveur")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
         UserResponse created = authenticationService.register(request);
         return ResponseEntity
@@ -54,26 +54,26 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Exchange credentials for an access token and a refresh token")
+    @Operation(summary = "Échanger des identifiants contre un jeton d'accès et un jeton de rafraîchissement")
     public TokenResponse login(@Valid @RequestBody LoginRequest request) {
         return authenticationService.login(request);
     }
 
     @PostMapping("/refresh")
-    @Operation(summary = "Rotate a refresh token and obtain a new access token")
+    @Operation(summary = "Faire tourner le jeton de rafraîchissement et obtenir un nouveau jeton d'accès")
     public TokenResponse refresh(@Valid @RequestBody RefreshTokenRequest request) {
         return authenticationService.refresh(request);
     }
 
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Revoke a refresh token")
+    @Operation(summary = "Révoquer un jeton de rafraîchissement")
     public void logout(@Valid @RequestBody RefreshTokenRequest request) {
         authenticationService.logout(request);
     }
 
     @PostMapping("/token")
-    @Operation(summary = "Client-credentials grant for technical accounts (ROLE_SERVICE)")
+    @Operation(summary = "Authentification par identifiants client pour les comptes techniques (ROLE_SERVICE)")
     public TokenResponse serviceToken(@Valid @RequestBody ServiceTokenRequest request) {
         return authenticationService.issueServiceToken(request);
     }
@@ -87,7 +87,7 @@ public class AuthController {
      * component that cannot embed a JOSE library.
      */
     @PostMapping("/validate")
-    @Operation(summary = "Introspect a token; returns 200 with valid=false rather than 401")
+    @Operation(summary = "Inspecter un jeton ; renvoie 200 avec valid=false plutôt qu'une 401")
     public TokenValidationResponse validate(@Valid @RequestBody ValidateTokenRequest request) {
         return authenticationService.validate(request);
     }
@@ -100,7 +100,7 @@ public class AuthController {
      * up by looking at the {@code kid} in the token header.
      */
     @GetMapping("/.well-known/jwks.json")
-    @Operation(summary = "Public keys used to verify token signatures")
+    @Operation(summary = "Clés publiques permettant de vérifier la signature des jetons")
     public Map<String, Object> jwks() {
         return new JWKSet(rsaSigningKey.toPublicJWK()).toJSONObject();
     }

@@ -21,11 +21,11 @@ import java.util.List;
  */
 public record AllocationPreviewRequest(
 
-        @NotEmpty(message = "lines must contain at least one product")
-        @Size(max = 50, message = "at most 50 lines per simulation")
+        @NotEmpty(message = "lines doit contenir au moins un produit")
+        @Size(max = 50, message = "50 lignes au maximum par simulation")
         List<@Valid Line> lines,
 
-        @NotNull(message = "destination is required")
+        @NotNull(message = "destination est obligatoire")
         @Valid GeoPointDto destination,
 
         /* Empty means every registered strategy, which is the useful default for a comparison. */
@@ -33,12 +33,12 @@ public record AllocationPreviewRequest(
 
     public record Line(
 
-            @NotBlank(message = "productId is required")
+            @NotBlank(message = "productId est obligatoire")
             String productId,
 
-            @NotNull(message = "quantity is required")
-            @Min(value = 1, message = "quantity must be at least 1")
-            @Max(value = 1000, message = "quantity must not exceed 1000")
+            @NotNull(message = "quantity est obligatoire")
+            @Min(value = 1, message = "quantity doit valoir au moins 1")
+            @Max(value = 1000, message = "quantity ne doit pas dépasser 1000")
             Integer quantity) {
     }
 }

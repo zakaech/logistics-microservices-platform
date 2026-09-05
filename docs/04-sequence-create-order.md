@@ -1,16 +1,16 @@
-# 04 — Sequence: "Create an order", end to end
+# 04 — Séquence : « Créer une commande », de bout en bout
 
-Scenario covered: authentication, catalogue verification, availability check, warehouse allocation, stock
-reservation, stock decrement, confirmation — plus the failure paths, because a saga is only credible when its
-compensations are drawn.
+Scénario couvert : authentification, vérification du catalogue, contrôle de disponibilité, affectation aux
+entrepôts, réservation de stock, décrément du stock, confirmation — ainsi que les chemins d'échec, car une
+saga n'est crédible que lorsque ses compensations sont dessinées.
 
-## 1. Nominal flow
+## 1. Flux nominal
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor U as User (browser)
-    participant UI as Angular SPA
+    actor U as Utilisateur (navigateur)
+    participant UI as SPA Angular
     participant GW as api-gateway
     participant AU as auth-service
     participant OR as order-service
@@ -20,64 +20,64 @@ sequenceDiagram
     participant PI as inventory_db
 
     rect rgb(238, 244, 252)
-    note over U, AU: Phase 1 — Authentication (once, then the token is reused)
-    U->>UI: submits email + password
+    note over U, AU: Phase 1 — Authentification (une fois, puis le jeton est réutilisé)
+    U->>UI: saisit email + mot de passe
     UI->>GW: POST /api/v1/auth/login
-    GW->>AU: forwards (public route, no token required)
-    AU->>AU: load user, BCrypt.matches(password, hash)
-    AU->>AU: sign JWT (sub, roles, exp 15 min) + create refresh token (hash stored)
+    GW->>AU: transmet (route publique, aucun jeton requis)
+    AU->>AU: charge l'utilisateur, BCrypt.matches(password, hash)
+    AU->>AU: signe le JWT (sub, roles, exp 15 min) + crée le refresh token (haché en base)
     AU-->>GW: 200 {accessToken, refreshToken, expiresIn}
     GW-->>UI: 200
-    UI->>UI: keep the access token in memory, refresh token in an httpOnly cookie
+    UI->>UI: garde l'access token en mémoire, le refresh token dans un cookie httpOnly
     end
 
     rect rgb(240, 248, 240)
-    note over U, PG: Phase 2 — Order submission and validation
-    U->>UI: validates the cart + delivery address
+    note over U, PG: Phase 2 — Soumission et validation de la commande
+    U->>UI: valide le panier + l'adresse de livraison
     UI->>GW: POST /api/v1/orders (Bearer JWT)
-    GW->>GW: JwtAuthenticationFilter: signature, exp, issuer
-    GW->>GW: add X-Request-Id
-    GW->>OR: forwards, token untouched
-    OR->>OR: resource server re-validates the JWT
-    OR->>OR: @PreAuthorize("hasRole('CLIENT')") + @Valid on CreateOrderRequest
-    OR->>OR: customerId := JWT sub (never read from the body)
+    GW->>GW: JwtAuthenticationFilter : signature, exp, issuer
+    GW->>GW: ajoute X-Request-Id
+    GW->>OR: transmet, jeton inchangé
+    OR->>OR: le resource server revalide le JWT
+    OR->>OR: @PreAuthorize("hasRole('CLIENT')") + @Valid sur CreateOrderRequest
+    OR->>OR: customerId := sub du JWT (jamais lu depuis le corps)
     end
 
     rect rgb(252, 248, 236)
-    note over OR, CA: Phase 3 — Catalogue verification (one batch call, not N)
+    note over OR, CA: Phase 3 — Vérification du catalogue (un appel groupé, pas N)
     OR->>GW: POST /api/v1/products/batch {productIds}
-    GW->>CA: forwards
-    CA->>CA: findAllById + filter status = ACTIVE
+    GW->>CA: transmet
+    CA->>CA: findAllById + filtre status = ACTIVE
     CA-->>OR: 200 [{id, sku, name, price, status}]
-    alt an id is unknown or DISCONTINUED
+    alt un identifiant est inconnu ou DISCONTINUED
         OR-->>UI: 422 problem+json {unavailableProducts:[...]}
     end
-    OR->>OR: build order lines from the SNAPSHOT (sku, name, unit price)
-    OR->>OR: total := sum(unitPrice x quantity) — computed server-side
+    OR->>OR: construit les lignes depuis l'INSTANTANÉ (sku, nom, prix unitaire)
+    OR->>OR: total := somme(prixUnitaire x quantité) — calculé côté serveur
     OR->>PG: INSERT order (status = CREATED) + order_lines
     end
 
     rect rgb(248, 240, 248)
-    note over OR, IN: Phase 4 — Availability and allocation
+    note over OR, IN: Phase 4 — Disponibilité et affectation
     OR->>GW: POST /api/v1/inventory/availability {productIds}
-    GW->>IN: forwards
+    GW->>IN: transmet
     IN->>PI: SELECT stock_items JOIN warehouses WHERE product_id IN (...) AND active
     IN-->>OR: 200 [{warehouseId, code, lat, lon, items:{productId: available}}]
-    OR->>OR: strategy := AllocationStrategyResolver.resolve(request.strategy or default)
-    OR->>OR: plan := strategy.allocate(AllocationRequest) — pure, in memory
-    note right of OR: filter → full-coverage set →<br/>single shipment, else split →<br/>feasibility check
-    alt total availability insufficient
-        OR->>PG: UPDATE order SET status = REJECTED + status_history(reason)
+    OR->>OR: strategy := AllocationStrategyResolver.resolve(request.strategy ou défaut)
+    OR->>OR: plan := strategy.allocate(AllocationRequest) — pure, en mémoire
+    note right of OR: filtrage → ensemble de couverture totale →<br/>expédition unique, sinon fractionnement →<br/>contrôle de faisabilité
+    alt disponibilité totale insuffisante
+        OR->>PG: UPDATE order SET status = REJECTED + status_history(motif)
         OR-->>UI: 409 problem+json {unsatisfiedLines:[...]}
     end
     end
 
     rect rgb(236, 246, 250)
-    note over OR, PI: Phase 5 — Reservation (the atomic step of the saga)
+    note over OR, PI: Phase 5 — Réservation (l'étape atomique de la saga)
     OR->>GW: POST /api/v1/inventory/reservations<br/>{reference: orderNumber, segments}
-    GW->>IN: forwards
+    GW->>IN: transmet
     IN->>PI: BEGIN
-    IN->>PI: SELECT stock_items FOR UPDATE (ordered by id — deadlock-free)
+    IN->>PI: SELECT stock_items FOR UPDATE (ordonné par id — sans interblocage)
     IN->>PI: UPDATE quantity_reserved += q (CHECK reserved <= on_hand)
     IN->>PI: INSERT reservation(ACTIVE, expires_at = now + 5 min) + reservation_lines
     IN->>PI: INSERT stock_movements(type = RESERVATION)
@@ -87,9 +87,9 @@ sequenceDiagram
     end
 
     rect rgb(238, 250, 238)
-    note over OR, PI: Phase 6 — Confirmation (stock actually leaves)
+    note over OR, PI: Phase 6 — Confirmation (le stock sort réellement)
     OR->>GW: POST /api/v1/inventory/reservations/{id}/confirm
-    GW->>IN: forwards
+    GW->>IN: transmet
     IN->>PI: BEGIN
     IN->>PI: UPDATE quantity_on_hand -= q, quantity_reserved -= q
     IN->>PI: INSERT stock_movements(type = OUTBOUND, reference = orderNumber)
@@ -98,26 +98,26 @@ sequenceDiagram
     IN-->>OR: 200 {status: CONFIRMED}
     OR->>PG: UPDATE order SET status = CONFIRMED + status_history
     OR-->>GW: 201 Created, Location: /api/v1/orders/{id}
-    GW-->>UI: 201 OrderResponse (lines + allocations + warehouses)
-    UI-->>U: confirmation screen, one block per shipment
+    GW-->>UI: 201 OrderResponse (lignes + affectations + entrepôts)
+    UI-->>U: écran de confirmation, un bloc par expédition
     end
 ```
 
-### What the numbered steps demonstrate
+### Ce que démontrent les étapes numérotées
 
-| Step | Point being made |
+| Étape | Point démontré |
 |---|---|
-| 8 | The refresh token never reaches JavaScript (httpOnly cookie); the access token is short-lived and kept in memory only |
-| 11–13 | Double validation: the gateway authenticates, the service authorises. Removing the gateway would not open a hole |
-| 14 | `customerId` comes from the signed token, never from the request body — otherwise anyone could order on someone else's account |
-| 16–20 | **One batch call** rather than one call per product: the N+1 problem exists over HTTP too |
-| 21–22 | The order stores a **price snapshot**; a later catalogue price change does not rewrite history, and the total is server-computed |
-| 25–27 | **One availability call** returning stock *and* warehouse coordinates, so the engine needs no second round trip |
-| 29 | The allocation itself is pure and in-memory — the only part of the flow that is unit-testable with no infrastructure |
-| 35–40 | The reservation is a single ACID transaction with rows locked in a **stable order** (by id), which removes deadlocks between concurrent orders |
-| 45–48 | On-hand stock decreases only at confirmation; the ledger (`stock_movements`) records every step |
+| 8 | Le refresh token n'atteint jamais JavaScript (cookie httpOnly) ; l'access token est à durée courte et reste en mémoire uniquement |
+| 11–13 | Double validation : la gateway authentifie, le service autorise. Retirer la gateway n'ouvrirait aucune brèche |
+| 14 | Le `customerId` provient du jeton signé, jamais du corps de la requête — sans quoi n'importe qui pourrait commander sur le compte d'autrui |
+| 16–20 | **Un seul appel groupé** plutôt qu'un appel par produit : le problème N+1 existe aussi en HTTP |
+| 21–22 | La commande stocke un **instantané des prix** ; un changement de tarif ultérieur au catalogue ne réécrit pas l'histoire, et le total est calculé côté serveur |
+| 25–27 | **Un seul appel de disponibilité** renvoyant le stock *et* les coordonnées des entrepôts, pour que le moteur n'ait aucun second aller-retour à faire |
+| 29 | L'affectation elle-même est pure et en mémoire — la seule partie du flux testable unitairement sans aucune infrastructure |
+| 35–40 | La réservation est une transaction ACID unique, avec les lignes verrouillées dans un **ordre stable** (par id), ce qui supprime les interblocages entre commandes concurrentes |
+| 45–48 | Le stock physique ne décroît qu'à la confirmation ; le journal (`stock_movements`) enregistre chaque étape |
 
-## 2. Failure paths and compensations
+## 2. Chemins d'échec et compensations
 
 ```mermaid
 sequenceDiagram
@@ -127,59 +127,62 @@ sequenceDiagram
     participant PG as order_db
 
     rect rgb(253, 240, 240)
-    note over OR, IN: Case A — stock taken by another order between snapshot and reservation
+    note over OR, IN: Cas A — stock pris par une autre commande entre l'instantané et la réservation
     OR->>IN: POST /reservations
-    IN-->>OR: 409 insufficient stock {productId, warehouseId}
-    OR->>IN: POST /inventory/availability (fresh snapshot)
-    IN-->>OR: 200 updated availability
-    OR->>OR: re-run allocate() — bounded retry, ONCE
-    alt the second attempt succeeds
+    IN-->>OR: 409 stock insuffisant {productId, warehouseId}
+    OR->>IN: POST /inventory/availability (nouvel instantané)
+    IN-->>OR: 200 disponibilité actualisée
+    OR->>OR: rejoue allocate() — nouvelle tentative bornée, UNE SEULE FOIS
+    alt la seconde tentative réussit
         OR->>IN: POST /reservations
         IN-->>OR: 201
-    else it fails again
-        OR->>PG: status = REJECTED, reason = "stock unavailable"
-        OR-->>OR: 409 to the client
+    else elle échoue de nouveau
+        OR->>PG: status = REJECTED, motif = "stock indisponible"
+        OR-->>OR: 409 renvoyé au client
     end
     end
 
     rect rgb(253, 244, 236)
-    note over OR, IN: Case B — confirmation fails (inventory-service down or timeout)
+    note over OR, IN: Cas B — la confirmation échoue (inventory-service arrêté ou en timeout)
     OR->>IN: POST /reservations/{id}/confirm
     IN --x OR: timeout / 5xx
-    OR->>IN: POST /reservations/{id}/cancel  (compensating action)
-    alt cancellation succeeds
+    OR->>IN: POST /reservations/{id}/cancel  (action compensatoire)
+    alt l'annulation réussit
         IN-->>OR: 200 CANCELLED, quantity_reserved -= q
-    else cancellation also fails
-        note over IN: the reservation TTL expires it automatically<br/>(scheduled job) — stock is never lost
+    else l'annulation échoue aussi
+        note over IN: le TTL de la réservation l'expire automatiquement<br/>(tâche planifiée) — le stock n'est jamais perdu
     end
-    OR->>PG: status = CANCELLED, reason = "inventory unavailable"
-    OR-->>OR: 503 to the client
+    OR->>PG: status = CANCELLED, motif = "inventaire indisponible"
+    OR-->>OR: 503 renvoyé au client
     end
 
     rect rgb(240, 240, 250)
-    note over OR, IN: Case C — order-service crashes between reservation and confirmation
-    note over IN: reservation stays ACTIVE with expires_at
-    note over IN: the scheduled job flips it to EXPIRED and releases quantity_reserved
-    note over PG: the order stays ALLOCATED; a reconciliation job cancels<br/>orders left in ALLOCATED past the TTL
+    note over OR, IN: Cas C — order-service tombe entre la réservation et la confirmation
+    note over IN: la réservation reste ACTIVE avec son expires_at
+    note over IN: la tâche planifiée la bascule en EXPIRED et libère quantity_reserved
+    note over PG: la commande reste ALLOCATED ; une tâche de réconciliation annule<br/>les commandes laissées en ALLOCATED au-delà du TTL
     end
 ```
 
-**Why this is enough here.** No message broker, no event sourcing, no distributed transaction manager: the
-combination of an *idempotent* reservation (unique `reference`), a *bounded* retry, an explicit *compensating
-action*, and a *TTL* as the last line of defence keeps stock consistent without introducing infrastructure
-the project does not need. The honest limitation, worth stating rather than hiding: a network partition at
-the exact moment of confirmation can leave the order in `ALLOCATED` until the reconciliation job runs. That
-is eventual consistency, and it is a deliberate trade-off.
+**Pourquoi cela suffit ici.** Aucun broker de messages, aucun event sourcing, aucun gestionnaire de
+transactions distribuées : la combinaison d'une réservation *idempotente* (`reference` unique), d'une
+tentative de reprise *bornée*, d'une *action compensatoire* explicite et d'un *TTL* en dernière ligne de
+défense maintient la cohérence du stock sans introduire une infrastructure dont le projet n'a pas besoin. La
+limite honnête, qu'il vaut mieux énoncer que masquer : une partition réseau à l'instant précis de la
+confirmation peut laisser la commande en `ALLOCATED` jusqu'au passage de la tâche de réconciliation. C'est de
+la cohérence à terme, et c'est un compromis assumé.
 
-## 3. Non-obvious decisions in this flow
+## 3. Décisions non évidentes dans ce flux
 
-1. **The order is persisted as `CREATED` *before* allocation.** A failed allocation still leaves a `REJECTED`
-   order with its reason — a customer can be told why, and the case can be analysed. Discarding the attempt
-   would destroy that information.
-2. **Confirmation is immediate, in the same use case.** A real e-commerce system would confirm at payment,
-   keeping the reservation `ACTIVE` in between. The protocol here is already the right one; only the trigger
-   would change. Adding a payment step later means calling `confirm` from another handler — no redesign.
-3. **The retry is bounded to one attempt.** Retrying indefinitely under contention turns a stockout into a
-   thundering herd. One retry absorbs the ordinary race; a second failure is genuine unavailability.
-4. **`X-Request-Id` propagates through every hop** and appears in every log line and every error body — with
-   four services, a support case is unusable without it.
+1. **La commande est persistée en `CREATED` *avant* l'affectation.** Une affectation échouée laisse malgré
+   tout une commande `REJECTED` avec son motif — le client peut savoir pourquoi, et le cas peut être analysé.
+   Abandonner la tentative détruirait cette information.
+2. **La confirmation est immédiate, dans le même cas d'utilisation.** Un vrai système e-commerce confirmerait
+   au paiement, en gardant la réservation `ACTIVE` entre-temps. Le protocole retenu ici est déjà le bon ;
+   seul le déclencheur changerait. Ajouter une étape de paiement plus tard revient à appeler `confirm` depuis
+   un autre handler — aucune refonte.
+3. **La reprise est bornée à une tentative.** Réessayer indéfiniment sous contention transforme une rupture
+   de stock en effet d'avalanche. Une reprise absorbe la course ordinaire ; un second échec traduit une
+   indisponibilité réelle.
+4. **`X-Request-Id` se propage à chaque saut** et apparaît dans chaque ligne de journal et chaque corps
+   d'erreur — avec quatre services, un ticket de support est inexploitable sans lui.

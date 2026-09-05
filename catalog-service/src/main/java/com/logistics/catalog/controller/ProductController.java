@@ -45,7 +45,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
-@Tag(name = "Products", description = "Catalogue browsing and product administration")
+@Tag(name = "Products", description = "Consultation du catalogue et administration des produits")
 public class ProductController {
 
     private static final int MAX_PAGE_SIZE = 100;
@@ -53,7 +53,7 @@ public class ProductController {
     private final ProductService productService;
 
     @GetMapping
-    @Operation(summary = "List, search and filter products")
+    @Operation(summary = "Lister, rechercher et filtrer les produits")
     public PagedResponse<ProductSummaryResponse> list(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String categoryId,
@@ -71,21 +71,21 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Fetch one product")
+    @Operation(summary = "Consulter un produit")
     public ProductResponse getById(@PathVariable String id) {
         return productService.findById(id);
     }
 
     @PostMapping("/batch")
     @PreAuthorize("hasAnyRole('SERVICE', 'ADMIN')")
-    @Operation(summary = "Bulk lookup by id, used by order-service to build order lines")
+    @Operation(summary = "Recherche par lot, utilisée par order-service pour construire les lignes de commande")
     public List<ProductSnapshotResponse> batch(@Valid @RequestBody ProductBatchRequest request) {
         return productService.findBatch(request);
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Create a product")
+    @Operation(summary = "Créer un produit")
     public ResponseEntity<ProductResponse> create(@Valid @RequestBody CreateProductRequest request) {
         ProductResponse created = productService.create(request);
         return ResponseEntity
@@ -96,7 +96,7 @@ public class ProductController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Replace a product")
+    @Operation(summary = "Remplacer un produit")
     public ProductResponse update(@PathVariable String id,
                                   @Valid @RequestBody UpdateProductRequest request) {
         return productService.update(id, request);
@@ -104,7 +104,7 @@ public class ProductController {
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Activate or discontinue a product")
+    @Operation(summary = "Activer ou retirer un produit du catalogue")
     public ProductResponse changeStatus(@PathVariable String id,
                                         @Valid @RequestBody UpdateProductStatusRequest request) {
         return productService.changeStatus(id, request.status());
@@ -113,7 +113,7 @@ public class ProductController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Soft delete: the product becomes DISCONTINUED")
+    @Operation(summary = "Suppression logique : le produit passe en DISCONTINUED")
     public void delete(@PathVariable String id) {
         productService.delete(id);
     }

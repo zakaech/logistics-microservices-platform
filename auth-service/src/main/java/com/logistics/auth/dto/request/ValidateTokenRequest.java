@@ -5,6 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 /** Token introspection payload. */
 public record ValidateTokenRequest(
 
-        @NotBlank(message = "token is required")
+        @NotBlank(message = "token est obligatoire")
         String token) {
 }

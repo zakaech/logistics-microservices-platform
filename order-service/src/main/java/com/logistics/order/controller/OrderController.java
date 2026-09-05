@@ -44,7 +44,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
-@Tag(name = "Orders", description = "Order placement, tracking and lifecycle")
+@Tag(name = "Orders", description = "Création, suivi et cycle de vie des commandes")
 public class OrderController {
 
     private static final int MAX_PAGE_SIZE = 100;
@@ -54,7 +54,7 @@ public class OrderController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
-    @Operation(summary = "Place an order: resolve, price, allocate, reserve and confirm")
+    @Operation(summary = "Passer une commande : résolution catalogue, valorisation, affectation, réservation et confirmation")
     public ResponseEntity<OrderResponse> create(@Valid @RequestBody CreateOrderRequest request) {
         // The customer is the token subject, never a field in the body.
         OrderResponse created = orderService.create(request, caller.customerId(), caller.actor());
@@ -65,7 +65,7 @@ public class OrderController {
     }
 
     @GetMapping
-    @Operation(summary = "List orders; a client sees only their own")
+    @Operation(summary = "Lister les commandes ; un client ne voit que les siennes")
     public PagedResponse<OrderSummaryResponse> list(
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
@@ -84,25 +84,25 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Fetch one order with its lines and shipments")
+    @Operation(summary = "Consulter une commande, ses lignes et ses expéditions")
     public OrderResponse getById(@PathVariable UUID id) {
         return orderService.findById(id, callerIdOrNull(), caller.isPrivileged());
     }
 
     @GetMapping("/{id}/allocations")
-    @Operation(summary = "The shipments the engine decided on, with the distance it used")
+    @Operation(summary = "Les expéditions décidées par le moteur, avec la distance utilisée")
     public List<OrderAllocationResponse> allocations(@PathVariable UUID id) {
         return orderService.findAllocations(id, callerIdOrNull(), caller.isPrivileged());
     }
 
     @GetMapping("/{id}/history")
-    @Operation(summary = "The order timeline: every transition and why it happened")
+    @Operation(summary = "Historique de la commande : chaque transition et son motif")
     public List<OrderStatusHistoryResponse> history(@PathVariable UUID id) {
         return orderService.findHistory(id, callerIdOrNull(), caller.isPrivileged());
     }
 
     @PostMapping("/{id}/cancel")
-    @Operation(summary = "Cancel an order, releasing any stock it still holds")
+    @Operation(summary = "Annuler une commande et libérer le stock qu'elle retient encore")
     public OrderResponse cancel(@PathVariable UUID id,
                                 @Valid @RequestBody(required = false) CancelOrderRequest request) {
         return orderService.cancel(id, request, callerIdOrNull(), caller.isPrivileged(),
@@ -111,7 +111,7 @@ public class OrderController {
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER', 'ADMIN')")
-    @Operation(summary = "Warehouse progress: SHIPPED, then DELIVERED")
+    @Operation(summary = "Avancement logistique : SHIPPED, puis DELIVERED")
     public OrderResponse changeStatus(@PathVariable UUID id,
                                       @Valid @RequestBody UpdateOrderStatusRequest request) {
         return orderService.changeStatus(id, request.status(), request.reason(), caller.actor());

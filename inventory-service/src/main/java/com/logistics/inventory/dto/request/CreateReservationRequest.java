@@ -22,35 +22,35 @@ import java.util.UUID;
  */
 public record CreateReservationRequest(
 
-        @NotBlank(message = "reference is required")
-        @Size(max = 64, message = "reference must not exceed 64 characters")
+        @NotBlank(message = "reference est obligatoire")
+        @Size(max = 64, message = "reference ne doit pas dépasser 64 caractères")
         String reference,
 
         /* Absent means the configured default TTL. */
-        @Min(value = 30, message = "ttlSeconds must be at least 30")
+        @Min(value = 30, message = "ttlSeconds doit valoir au moins 30")
         Integer ttlSeconds,
 
-        @NotEmpty(message = "segments must contain at least one warehouse")
-        @Size(max = 20, message = "at most 20 warehouses per reservation")
+        @NotEmpty(message = "segments doit contenir au moins un entrepôt")
+        @Size(max = 20, message = "20 entrepôts au maximum par réservation")
         List<@Valid Segment> segments) {
 
     public record Segment(
 
-            @NotNull(message = "warehouseId is required")
+            @NotNull(message = "warehouseId est obligatoire")
             UUID warehouseId,
 
-            @NotEmpty(message = "lines must contain at least one product")
-            @Size(max = 50, message = "at most 50 lines per warehouse")
+            @NotEmpty(message = "lines doit contenir au moins un produit")
+            @Size(max = 50, message = "50 lignes au maximum par entrepôt")
             List<@Valid Line> lines) {
     }
 
     public record Line(
 
-            @NotBlank(message = "productId is required")
+            @NotBlank(message = "productId est obligatoire")
             String productId,
 
-            @NotNull(message = "quantity is required")
-            @Min(value = 1, message = "quantity must be at least 1")
+            @NotNull(message = "quantity est obligatoire")
+            @Min(value = 1, message = "quantity doit valoir au moins 1")
             Integer quantity) {
     }
 }

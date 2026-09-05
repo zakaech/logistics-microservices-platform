@@ -29,26 +29,26 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/categories")
 @RequiredArgsConstructor
-@Tag(name = "Categories", description = "Category tree and attribute schemas")
+@Tag(name = "Categories", description = "Arborescence des catégories et schémas d'attributs")
 public class CategoryController {
 
     private final CategoryService categoryService;
 
     @GetMapping
-    @Operation(summary = "List categories, flat or as a tree")
+    @Operation(summary = "Lister les catégories, à plat ou en arborescence")
     public List<CategoryResponse> list(@RequestParam(defaultValue = "false") boolean tree) {
         return categoryService.findAll(tree);
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Fetch one category with its attribute schema")
+    @Operation(summary = "Consulter une catégorie et son schéma d'attributs")
     public CategoryResponse getById(@PathVariable String id) {
         return categoryService.findById(id);
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Create a category")
+    @Operation(summary = "Créer une catégorie")
     public ResponseEntity<CategoryResponse> create(@Valid @RequestBody CreateCategoryRequest request) {
         CategoryResponse created = categoryService.create(request);
         return ResponseEntity
@@ -59,7 +59,7 @@ public class CategoryController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Replace a category; moving it re-paths the whole subtree")
+    @Operation(summary = "Remplacer une catégorie ; la déplacer recalcule le chemin de tout le sous-arbre")
     public CategoryResponse update(@PathVariable String id,
                                    @Valid @RequestBody UpdateCategoryRequest request) {
         return categoryService.update(id, request);
@@ -68,7 +68,7 @@ public class CategoryController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Delete a category; refused while it has children or products")
+    @Operation(summary = "Supprimer une catégorie ; refusé tant qu'elle a des enfants ou des produits")
     public void delete(@PathVariable String id) {
         categoryService.delete(id);
     }

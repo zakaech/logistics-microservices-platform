@@ -4,5 +4,5 @@ import com.logistics.catalog.domain.enums.ProductStatus;
 import jakarta.validation.constraints.NotNull;
 
 public record UpdateProductStatusRequest(
-        @NotNull(message = "status is required") ProductStatus status) {
+        @NotNull(message = "status est obligatoire") ProductStatus status) {
 }

@@ -36,7 +36,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-@Tag(name = "Users", description = "Account lookup and role administration")
+@Tag(name = "Users", description = "Consultation des comptes et administration des rôles")
 public class UserController {
 
     private static final int MAX_PAGE_SIZE = 100;
@@ -44,21 +44,21 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/me")
-    @Operation(summary = "The authenticated user's own profile")
+    @Operation(summary = "Profil de l'utilisateur authentifié")
     public UserResponse me(@AuthenticationPrincipal Jwt jwt) {
         return userService.findById(UUID.fromString(jwt.getSubject()));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or #id.toString() == authentication.name")
-    @Operation(summary = "Look up a user; a non-admin may only read their own account")
+    @Operation(summary = "Consulter un utilisateur ; un non-administrateur ne peut lire que son propre compte")
     public UserResponse getById(@PathVariable UUID id) {
         return userService.findById(id);
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "List and search users")
+    @Operation(summary = "Lister et rechercher les utilisateurs")
     public PagedResponse<UserResponse> list(
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "0") int page,
@@ -75,7 +75,7 @@ public class UserController {
 
     @PutMapping("/{id}/roles")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Replace a user's roles")
+    @Operation(summary = "Remplacer les rôles d'un utilisateur")
     public UserResponse replaceRoles(@PathVariable UUID id,
                                      @Valid @RequestBody UpdateRolesRequest request) {
         return userService.replaceRoles(id, request.roles());
@@ -83,7 +83,7 @@ public class UserController {
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Enable or disable a user")
+    @Operation(summary = "Activer ou désactiver un utilisateur")
     public UserResponse changeStatus(@PathVariable UUID id,
                                      @Valid @RequestBody UpdateUserStatusRequest request) {
         return userService.changeStatus(id, request.enabled());

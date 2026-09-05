@@ -1,46 +1,46 @@
-# 01 — Architecture Overview
+# 01 — Vue d'ensemble de l'architecture
 
-> Multi-Warehouse Logistics Platform — Phase 0 (design only, no code yet).
+> Plateforme Microservices de Gestion Logistique — Phase 0 (conception seule, aucun code à ce stade).
 
-## 1. Purpose and scope
+## 1. Objet et périmètre
 
-The platform manages a **product catalogue**, **per-warehouse stock** and **customer orders** across several
-geographically distributed warehouses. Its functional core is not CRUD but the **warehouse allocation
-engine**: when an order is placed, the system decides *which warehouse — or combination of warehouses —
-fulfils it*.
+La plateforme gère un **catalogue de produits**, un **stock par entrepôt** et des **commandes clients**
+répartis sur plusieurs entrepôts géographiquement distants. Son cœur fonctionnel n'est pas du CRUD mais le
+**moteur d'affectation aux entrepôts** : lorsqu'une commande est passée, le système décide *quel entrepôt —
+ou quelle combinaison d'entrepôts — la satisfait*.
 
-Quality goals, in priority order:
+Objectifs de qualité, par ordre de priorité :
 
-| # | Goal | How it is addressed |
+| # | Objectif | Comment il est traité |
 |---|------|---------------------|
-| 1 | Explicit service boundaries | One bounded context per service, one database per service, no shared tables |
-| 2 | Testable business rule | Allocation isolated behind `WarehouseAllocationStrategy`; the algorithm performs no I/O |
-| 3 | Correct stock under concurrency | Reservation protocol + optimistic locking + orchestration saga |
-| 4 | Uniform security | Stateless JWT, validated at the edge **and** inside every service (defence in depth) |
-| 5 | Reproducible environment | Docker Compose, externalised configuration, no secret in source |
+| 1 | Frontières de services explicites | Un bounded context par service, une base par service, aucune table partagée |
+| 2 | Règle métier testable | Affectation isolée derrière `WarehouseAllocationStrategy` ; l'algorithme ne fait aucune E/S |
+| 3 | Stock correct en concurrence | Protocole de réservation + verrouillage + saga d'orchestration |
+| 4 | Sécurité uniforme | JWT sans état, validé en périphérie **et** dans chaque service (défense en profondeur) |
+| 5 | Environnement reproductible | Docker Compose, configuration externalisée, aucun secret dans les sources |
 
-## 2. Context diagram
+## 2. Diagramme de contexte
 
 ```mermaid
 flowchart LR
-    USER["End user (browser)"]
+    USER["Utilisateur final (navigateur)"]
 
-    subgraph CLIENT["Client tier"]
-        UI["frontend<br/>Angular SPA<br/>:4200"]
+    subgraph CLIENT["Couche client"]
+        UI["frontend<br/>SPA Angular<br/>:4200"]
     end
 
-    subgraph EDGE["Edge tier"]
+    subgraph EDGE["Couche de périphérie"]
         GW["api-gateway<br/>Spring Cloud Gateway<br/>:8080"]
     end
 
-    subgraph APP["Application tier"]
+    subgraph APP["Couche applicative"]
         AUTH["auth-service<br/>:8081"]
         CAT["catalog-service<br/>:8082"]
         INV["inventory-service<br/>:8083"]
         ORD["order-service<br/>:8084"]
     end
 
-    subgraph DATA["Data tier"]
+    subgraph DATA["Couche de données"]
         PGA[("PostgreSQL<br/>auth_db")]
         PGI[("PostgreSQL<br/>inventory_db")]
         PGO[("PostgreSQL<br/>order_db")]
@@ -55,8 +55,8 @@ flowchart LR
     GW --> INV
     GW --> ORD
 
-    ORD -. "REST via gateway: product snapshots" .-> GW
-    ORD -. "REST via gateway: availability / reservations" .-> GW
+    ORD -. "REST via la gateway : instantanés produits" .-> GW
+    ORD -. "REST via la gateway : disponibilité / réservations" .-> GW
 
     AUTH --- PGA
     INV --- PGI
@@ -64,21 +64,22 @@ flowchart LR
     CAT --- MDB
 ```
 
-**Reading the diagram.** Solid arrows are user-initiated traffic. Dotted arrows are service-to-service
-traffic: `order-service` is the only service that calls others, and it does so **through the gateway**, so
-routing, tracing and authorisation stay concentrated in one place. `auth-service`, `catalog-service` and
-`inventory-service` never call each other — the dependency graph is a tree, not a mesh, which keeps failure
-analysis tractable.
+**Lecture du diagramme.** Les flèches pleines représentent le trafic initié par l'utilisateur. Les flèches
+pointillées représentent le trafic entre services : `order-service` est le seul service qui en appelle
+d'autres, et il le fait **à travers la gateway**, de sorte que le routage, la traçabilité et l'autorisation
+restent concentrés en un seul endroit. `auth-service`, `catalog-service` et `inventory-service` ne s'appellent
+jamais entre eux — le graphe de dépendances est un arbre, pas un maillage, ce qui garde l'analyse de panne
+traitable.
 
-## 3. Runtime / deployment view (Docker Compose)
+## 3. Vue d'exécution / de déploiement (Docker Compose)
 
 ```mermaid
 flowchart TB
-    HOST["Host machine"]
-    subgraph NET["docker network: logistics-net"]
+    HOST["Machine hôte"]
+    subgraph NET["réseau docker : logistics-net"]
         direction TB
-        C1["frontend (nginx :80) → host 4200"]
-        C2["api-gateway :8080 → host 8080"]
+        C1["frontend (nginx :80) → hôte 4200"]
+        C2["api-gateway :8080 → hôte 8080"]
         C3["auth-service :8081"]
         C4["catalog-service :8082"]
         C5["inventory-service :8083"]
@@ -98,185 +99,194 @@ flowchart TB
     C4 --> C8
 ```
 
-Only the gateway and the frontend publish ports on the host. Application services are reachable only from
-inside the Docker network — but they still validate the JWT themselves, because *network isolation is a
-deployment detail, not a security guarantee*.
+Seuls la gateway et le frontend publient des ports sur l'hôte. Les services applicatifs ne sont joignables
+que depuis l'intérieur du réseau Docker — mais ils valident malgré tout le JWT eux-mêmes, car *l'isolation
+réseau est un détail de déploiement, pas une garantie de sécurité*.
 
-**Note on database containers.** In production each service would own its own database *instance*. Here a
-single PostgreSQL container hosts three **separate logical databases** (`auth_db`, `inventory_db`,
-`order_db`), created by an init script, each with **its own dedicated user**. No service can read another
-service's schema, so the rule "no cross-service SQL join, ever" is enforced by permissions rather than by
-discipline. This is a deliberate laptop-scale compromise and it is worth stating as such in an interview.
+**Note sur les conteneurs de bases de données.** En production, chaque service posséderait sa propre
+*instance* de base. Ici, un unique conteneur PostgreSQL héberge trois **bases logiques distinctes**
+(`auth_db`, `inventory_db`, `order_db`), créées par un script d'initialisation, chacune avec **son propre
+utilisateur dédié**. Aucun service ne peut lire le schéma d'un autre : la règle « aucune jointure SQL
+inter-services, jamais » est donc appliquée par les permissions plutôt que par la discipline. C'est un
+compromis assumé à l'échelle d'un poste de développement, et il vaut mieux le présenter comme tel en
+entretien.
 
-## 4. Service boundaries — why these seams
+## 4. Frontières des services — pourquoi ces découpes
 
-The decomposition follows **bounded contexts**: each service owns a set of business concepts that change
-together, for the same reason, driven by the same stakeholders.
+La décomposition suit les **bounded contexts** : chaque service possède un ensemble de concepts métier qui
+évoluent ensemble, pour la même raison, sous l'impulsion des mêmes acteurs.
 
-| Service | Owns (single source of truth) | Changes when… | Would break if merged with |
+| Service | Possède (source unique de vérité) | Change lorsque… | Casserait s'il était fusionné avec |
 |---|---|---|---|
-| `auth-service` | Identity, credentials, roles, token issuance | Security policy changes | Anything — it is the trust anchor and must be independently auditable |
-| `catalog-service` | Product definitions, categories, technical sheets, list prices | Product management changes | `inventory-service`: a product *description* and a product *quantity* have different owners, lifecycles and read/write ratios |
-| `inventory-service` | Warehouses, stock levels, movements, reservations | Logistics operations change | `order-service`: stock is consumed by many processes (returns, transfers, stock counts), not only by orders |
-| `order-service` | Orders, order lines, allocation decisions, order lifecycle | Commercial rules change | `inventory-service`: merging would hide the interesting distributed-consistency problem behind a local transaction |
-| `api-gateway` | Routing, edge authentication, cross-cutting filters | Topology or edge policy changes | — |
+| `auth-service` | Identités, identifiants, rôles, émission des jetons | La politique de sécurité change | N'importe lequel — c'est l'ancre de confiance, elle doit rester auditable indépendamment |
+| `catalog-service` | Définitions produits, catégories, fiches techniques, prix catalogue | La gestion produit change | `inventory-service` : la *description* d'un produit et sa *quantité* n'ont ni le même propriétaire, ni le même cycle de vie, ni le même ratio lecture/écriture |
+| `inventory-service` | Entrepôts, niveaux de stock, mouvements, réservations | Les opérations logistiques changent | `order-service` : le stock est consommé par de nombreux processus (retours, transferts, inventaires), pas seulement par les commandes |
+| `order-service` | Commandes, lignes, décisions d'affectation, cycle de vie | Les règles commerciales changent | `inventory-service` : la fusion masquerait derrière une transaction locale le problème intéressant de cohérence distribuée |
+| `api-gateway` | Routage, authentification en périphérie, filtres transverses | La topologie ou la politique de périphérie change | — |
 
-Three checks that justify the seams:
+Trois contrôles qui justifient ces découpes :
 
-1. **Independent write models.** A stock update (`inventory`) and a product-description update (`catalog`)
-   are never part of the same business transaction.
-2. **Different scaling and access profiles.** The catalogue is read-dominated and cacheable; inventory is
-   write-heavy and contention-prone; auth is low-volume but security-critical.
-3. **Different data shapes.** Only the catalogue needs a schemaless model (see §5).
+1. **Modèles d'écriture indépendants.** Une mise à jour de stock (`inventory`) et une mise à jour de
+   description produit (`catalog`) ne font jamais partie de la même transaction métier.
+2. **Profils de charge et d'accès différents.** Le catalogue est dominé par la lecture et cacheable ;
+   l'inventaire est intensif en écriture et sujet à la contention ; l'authentification est peu volumineuse
+   mais critique pour la sécurité.
+3. **Formes de données différentes.** Seul le catalogue a besoin d'un modèle sans schéma (voir §5).
 
-**Deliberate coupling, made explicit.** `order-service` depends on the other two at write time. That
-dependency is not hidden: it goes through two dedicated ports (`CatalogClient`, `InventoryClient`)
-implemented as an **anti-corruption layer** — foreign JSON is translated into local domain objects
-immediately, so a change in another service's payload cannot leak into the order domain.
+**Un couplage délibéré, rendu explicite.** `order-service` dépend des deux autres au moment de l'écriture.
+Cette dépendance n'est pas dissimulée : elle passe par deux ports dédiés (`CatalogClient`, `InventoryClient`)
+implémentés comme une **couche anticorruption** — le JSON étranger est traduit immédiatement en objets du
+domaine local, de sorte qu'un changement dans la charge utile d'un autre service ne peut pas s'infiltrer dans
+le domaine des commandes.
 
-**Referential integrity across services.** `inventory.stock_items.product_id` and
-`orders.order_lines.product_id` are `VARCHAR` **logical references**, not foreign keys. There is no
-database-level integrity between services — by design. Validity is enforced at the application boundary
-(`order-service` resolves products through `catalog-service` before persisting), and orders keep a
-**denormalised snapshot** (SKU, name, unit price) so a past order stays readable and commercially accurate
-even if the product is later renamed, repriced or discontinued.
+**Intégrité référentielle entre services.** `inventory.stock_items.product_id` et
+`orders.order_lines.product_id` sont des **références logiques** `VARCHAR`, pas des clés étrangères. Il
+n'existe aucune intégrité au niveau base entre services — c'est voulu. La validité est garantie à la
+frontière applicative (`order-service` résout les produits auprès de `catalog-service` avant de persister),
+et les commandes conservent un **instantané dénormalisé** (SKU, nom, prix unitaire) afin qu'une commande
+passée reste lisible et commercialement exacte même si le produit est ensuite renommé, retarifé ou retiré.
 
-## 5. Polyglot persistence — why MongoDB only for the catalogue
+## 5. Persistance polyglotte — pourquoi MongoDB uniquement pour le catalogue
 
-The rule applied: **choose the store from the shape of the data and the shape of the queries**, not from
-taste.
+La règle appliquée : **choisir le magasin de données d'après la forme des données et la forme des
+requêtes**, non par goût.
 
-**PostgreSQL for `auth`, `inventory`, `order`** — these three contexts are relational and transactional:
+**PostgreSQL pour `auth`, `inventory`, `order`** — ces trois contextes sont relationnels et transactionnels :
 
-- Stable, narrow schemas with meaningful relations (`order → order_lines → allocations`).
-- Invariants that must hold at write time: `quantity_reserved <= quantity_on_hand`, `quantity_on_hand >= 0`.
-  These are expressible as `CHECK` constraints and enforced by the engine, not by application code.
-- Multi-row atomic updates inside one aggregate (reserving N lines across M stock items) require real ACID
-  transactions.
-- **Optimistic locking** (`@Version` / a `version` column) serialises concurrent stock updates.
+- Des schémas stables et resserrés, avec des relations qui ont un sens (`order → order_lines → allocations`).
+- Des invariants qui doivent tenir au moment de l'écriture : `quantity_reserved <= quantity_on_hand`,
+  `quantity_on_hand >= 0`. Ils s'expriment comme contraintes `CHECK` et sont appliqués par le moteur, pas par
+  du code applicatif.
+- Les mises à jour atomiques multi-lignes au sein d'un même agrégat (réserver N lignes sur M articles de
+  stock) exigent de vraies transactions ACID.
+- Le **verrouillage optimiste** (`@Version` / une colonne `version`) sérialise les mises à jour de stock
+  concurrentes.
 
-**MongoDB for `catalog`** — the product sheet is the one genuinely heterogeneous object in the platform:
+**MongoDB pour `catalog`** — la fiche produit est le seul objet réellement hétérogène de la plateforme :
 
-- A *technical sheet* has different attributes per category: a pallet truck has `capacityKg` and
-  `forkLengthMm`; a cardboard box has `flute` and `burstStrengthKpa`. Modelling this relationally leads to
-  either one wide sparse table, or an EAV (entity–attribute–value) anti-pattern, or one table per category.
-  A document with a nested `attributes` object models it directly.
-- Categories carry their own `attributeSchema`, so **the schema is data**: adding a category must not require
-  a database migration.
-- Access pattern: read the whole product by id or by filter and render it as-is. No join is needed — the
-  aggregate *is* the document. Read-dominated, so denormalising the category label into the product is cheap.
-- Product data has no cross-entity transactional invariant, which is precisely what MongoDB does *not* offer
-  cheaply and what PostgreSQL does.
+- Une *fiche technique* n'a pas les mêmes attributs selon la catégorie : un transpalette a `capacityKg` et
+  `forkLengthMm` ; un carton a `flute` et `burstStrengthKpa`. Modéliser cela en relationnel conduit soit à
+  une table large et creuse, soit à un antipatron EAV (entité–attribut–valeur), soit à une table par
+  catégorie. Un document avec un objet `attributes` imbriqué le modélise directement.
+- Les catégories portent leur propre `attributeSchema` : **le schéma est une donnée**, et ajouter une
+  catégorie ne doit pas exiger une migration de base.
+- Motif d'accès : lire le produit entier par identifiant ou par filtre, et l'afficher tel quel. Aucune
+  jointure n'est nécessaire — l'agrégat *est* le document. La lecture domine, donc dénormaliser le libellé de
+  catégorie dans le produit coûte peu.
+- Les données produit ne portent aucun invariant transactionnel inter-entités, ce qui est précisément ce que
+  MongoDB n'offre *pas* à bon compte et ce que PostgreSQL offre.
 
-**The honest counter-argument** (better stated by you than by the interviewer): PostgreSQL `JSONB` with a GIN
-index would also handle variable attributes. MongoDB is chosen because the catalogue is the *only* context
-where the document is the aggregate, and because operating a second store is part of the exercise. What
-would be indefensible is the opposite choice: putting stock or orders in MongoDB and losing the transactional
-guarantees the allocation engine depends on.
+**Le contre-argument honnête** (mieux vaut l'énoncer soi-même que le voir arriver de l'examinateur) :
+PostgreSQL `JSONB` avec un index GIN traiterait aussi des attributs variables. MongoDB est retenu parce que
+le catalogue est le *seul* contexte où le document est l'agrégat, et parce qu'exploiter un second magasin de
+données fait partie de l'exercice. Ce qui serait indéfendable, c'est le choix inverse : mettre le stock ou
+les commandes dans MongoDB et perdre les garanties transactionnelles dont dépend le moteur d'affectation.
 
-## 6. Security model
+## 6. Modèle de sécurité
 
 ```mermaid
 flowchart LR
-    A["Angular SPA"] -- "1. POST /auth/login" --> GW1["api-gateway"]
-    GW1 --> AS["auth-service<br/>signs the JWT"]
+    A["SPA Angular"] -- "1. POST /auth/login" --> GW1["api-gateway"]
+    GW1 --> AS["auth-service<br/>signe le JWT"]
     AS -- "2. access + refresh token" --> A
     A -- "3. Authorization: Bearer jwt" --> GW2["api-gateway<br/>JwtAuthenticationFilter<br/>signature · exp · issuer"]
-    GW2 -- "4. forwarded, token untouched<br/>+ X-Request-Id" --> SVC["target service<br/>resource server<br/>@PreAuthorize on roles"]
-    AS -. "public key" .-> GW2
-    AS -. "public key" .-> SVC
+    GW2 -- "4. transmis, jeton inchangé<br/>+ X-Request-Id" --> SVC["service cible<br/>resource server<br/>@PreAuthorize sur les rôles"]
+    AS -. "clé publique" .-> GW2
+    AS -. "clé publique" .-> SVC
 ```
 
-- **Stateless authentication.** The access token is a short-lived JWT (15 min). The refresh token is
-  long-lived (7 days), stored **hashed** in `auth_db`, revocable, and rotated on every use.
-- **Two levels of enforcement.** The gateway rejects anything without a valid token (coarse-grained:
-  *authentication*). Each service re-validates the signature and applies `@PreAuthorize` on roles and on
-  ownership (fine-grained: *authorisation*). A service never trusts a header it did not verify itself.
-- **Roles**: `ROLE_ADMIN`, `ROLE_WAREHOUSE_MANAGER`, `ROLE_CLIENT`, and `ROLE_SERVICE` for the technical
-  accounts used in service-to-service calls.
-- **No secret in source.** Keys and passwords come from environment variables (`.env`, git-ignored), with a
-  committed `.env.example` documenting every required variable. `application.yml` only ever references
-  `${VARIABLE}` placeholders.
-- **Passwords** hashed with BCrypt (strength 12). Login failures return a single generic message — no user
-  enumeration.
+- **Authentification sans état.** L'access token est un JWT de courte durée (15 min). Le refresh token est de
+  longue durée (7 jours), stocké **haché** dans `auth_db`, révocable, et renouvelé à chaque usage.
+- **Deux niveaux d'application.** La gateway rejette tout ce qui n'a pas de jeton valide (grain grossier :
+  *authentification*). Chaque service revalide la signature et applique `@PreAuthorize` sur les rôles et sur
+  la propriété de la ressource (grain fin : *autorisation*). Un service ne fait jamais confiance à un en-tête
+  qu'il n'a pas vérifié lui-même.
+- **Rôles** : `ROLE_ADMIN`, `ROLE_WAREHOUSE_MANAGER`, `ROLE_CLIENT`, et `ROLE_SERVICE` pour les comptes
+  techniques utilisés dans les appels entre services.
+- **Aucun secret dans les sources.** Les clés et les mots de passe proviennent de variables d'environnement
+  (`.env`, ignoré par Git), avec un `.env.example` versionné documentant chaque variable requise.
+  `application.yml` ne référence jamais que des substituants `${VARIABLE}`.
+- **Mots de passe** hachés avec BCrypt (force 12). Les échecs de connexion renvoient un message générique
+  unique — aucune énumération d'utilisateurs.
 
-## 7. Consistency: the reservation saga
+## 7. Cohérence : la saga de réservation
 
-Creating an order spans two services and cannot use a single database transaction. The pattern applied is an
-**orchestration saga** in which `order-service` is the orchestrator, while a **two-phase reservation** inside
-`inventory-service` provides the atomic step.
+Créer une commande traverse deux services et ne peut pas tenir dans une seule transaction de base. Le patron
+appliqué est une **saga d'orchestration** dans laquelle `order-service` est l'orchestrateur, tandis qu'une
+**réservation en deux temps** au sein d'`inventory-service` fournit l'étape atomique.
 
 ```mermaid
 stateDiagram-v2
     [*] --> CREATED
-    CREATED --> REJECTED: allocation impossible
-    CREATED --> ALLOCATED: reservation created
-    ALLOCATED --> CONFIRMED: reservation confirmed, stock deducted
-    ALLOCATED --> CANCELLED: compensation, reservation released
+    CREATED --> REJECTED: affectation impossible
+    CREATED --> ALLOCATED: réservation créée
+    ALLOCATED --> CONFIRMED: réservation confirmée, stock déduit
+    ALLOCATED --> CANCELLED: compensation, réservation libérée
     CONFIRMED --> SHIPPED
-    CONFIRMED --> CANCELLED: compensating inbound movement
+    CONFIRMED --> CANCELLED: mouvement d'entrée compensatoire
     SHIPPED --> DELIVERED
     REJECTED --> [*]
     CANCELLED --> [*]
     DELIVERED --> [*]
 ```
 
-Why a reservation rather than a direct decrement:
+Pourquoi une réservation plutôt qu'un décrément direct :
 
-- Between "read availability" and "decrement", another order can consume the same stock. The reservation is
-  a single atomic operation (`quantity_reserved += q`, guarded by
-  `CHECK (quantity_reserved <= quantity_on_hand)` and by optimistic locking) that either succeeds for **all**
-  lines or fails for all of them.
-- It provides a natural **compensating action** (`cancel`), which is what makes the saga recoverable.
-- Reservations carry a TTL, and a scheduled job expires stale ones, so a crash between *reserve* and
-  *confirm* cannot leak stock permanently.
-- The `reference` field (the order number) makes the call **idempotent**: replaying it returns the existing
-  reservation instead of reserving twice.
+- Entre « lire la disponibilité » et « décrémenter », une autre commande peut consommer le même stock. La
+  réservation est une opération atomique unique (`quantity_reserved += q`, protégée par
+  `CHECK (quantity_reserved <= quantity_on_hand)` et par le verrouillage) qui réussit pour **toutes** les
+  lignes ou échoue pour toutes.
+- Elle fournit une **action compensatoire** naturelle (`cancel`), qui est ce qui rend la saga réversible.
+- Les réservations portent un TTL, et une tâche planifiée expire celles qui traînent : un plantage entre
+  *réserver* et *confirmer* ne peut pas immobiliser du stock définitivement.
+- Le champ `reference` (le numéro de commande) rend l'appel **idempotent** : le rejouer renvoie la
+  réservation existante au lieu de réserver deux fois.
 
-## 8. Cross-cutting concerns
+## 8. Préoccupations transverses
 
-| Concern | Decision |
+| Préoccupation | Décision |
 |---|---|
-| Error format | RFC 7807 `application/problem+json`, produced by one `@RestControllerAdvice` per service |
-| Validation | Bean Validation (`@Valid`) on every request DTO; violations mapped to a 400 problem with a per-field `errors` array |
-| Correlation | The gateway generates `X-Request-Id` when absent; every service puts it in the SLF4J MDC and echoes it in the error body |
-| Logging | Structured JSON logs on stdout (container-friendly); tokens and password fields are never logged |
-| Health | Actuator `/actuator/health` with readiness/liveness groups, used as the Docker Compose healthcheck |
-| API documentation | springdoc-openapi per service, aggregated behind the gateway |
-| Resilience | Timeouts (connect 2 s / read 5 s) on every outbound call, plus a bounded retry on idempotent calls only |
-| Time | All timestamps stored as `TIMESTAMPTZ` / UTC `Instant`; formatting is the frontend's job |
+| Format d'erreur | RFC 7807 `application/problem+json`, produit par un `@RestControllerAdvice` par service |
+| Validation | Bean Validation (`@Valid`) sur chaque DTO de requête ; les violations sont converties en problème 400 avec un tableau `errors` par champ |
+| Corrélation | La gateway génère `X-Request-Id` s'il est absent ; chaque service le place dans le MDC SLF4J et le renvoie dans le corps d'erreur |
+| Journalisation | Journaux structurés JSON sur stdout (adaptés aux conteneurs) ; les jetons et les champs de mot de passe ne sont jamais journalisés |
+| Santé | Actuator `/actuator/health` avec les groupes readiness/liveness, utilisé comme healthcheck Docker Compose |
+| Documentation d'API | springdoc-openapi par service, agrégée derrière la gateway |
+| Résilience | Timeouts (connexion 2 s / lecture 5 s) sur chaque appel sortant, plus une reprise bornée sur les seuls appels idempotents |
+| Temps | Tous les horodatages stockés en `TIMESTAMPTZ` / `Instant` UTC ; le formatage est l'affaire du frontend |
 
-## 9. Decision log
+## 9. Journal des décisions
 
-| ID | Decision | Rationale | Rejected alternative |
+| ID | Décision | Justification | Alternative écartée |
 |----|----------|-----------|----------------------|
-| D1 | One logical database per service | Enforces the boundary at permission level | Shared schema — cheaper, but destroys service autonomy |
-| D2 | JWT validated at the gateway *and* in each service | Defence in depth; services stay safe if exposed | Trusting gateway-injected identity headers |
-| D3 | Two-phase reservation + saga | The only way to keep stock correct across two services | Direct decrement (lost updates) or 2PC (heavy, poorly supported) |
-| D4 | Denormalised product snapshot in `order_lines` | Historical accuracy; order reads independent of the catalogue | Live lookup on every order read — chatty and historically wrong |
-| D5 | RFC 7807 error format | Standard, native in Spring Boot 3, no bespoke envelope | Custom `{code, message}` envelope |
-| D6 | Haversine distance from stored coordinates | Deterministic and testable, no external dependency | Road-distance API — realistic but non-deterministic in tests |
-| D7 | Explicit `PagedResponse<T>` DTO | Spring's `PageImpl` JSON shape is unstable across versions | Serialising `Page` directly |
-| D8 | **RS256 + JWKS** for JWT signing | Only `auth-service` holds the private key; compromising any other service cannot forge a token | HS256 shared secret — simpler, but every service could mint admin tokens |
-| D9 | **Technical account (`ROLE_SERVICE`)** for service-to-service calls | Internal endpoints (`/inventory/reservations`, `/products/batch`) stay unreachable from a browser session | Propagating the end-user JWT — would force internal endpoints to accept `ROLE_CLIENT` |
-| D10 | **No shared Maven module** | Full service autonomy; no release coupling between services | A `shared-kernel` module — less duplication, but a rebuild of all services on every change |
-| D11 | **Pessimistic locking** (`SELECT … FOR UPDATE`, rows ordered by id) on the reservation path | Stock is a highly contended resource; ordering the locks removes deadlocks and avoids a retry storm at the exact moment stock runs out | Optimistic locking + retry — better throughput at low contention, worst behaviour precisely when it matters |
+| D1 | Une base logique par service | Applique la frontière au niveau des permissions | Schéma partagé — moins coûteux, mais détruit l'autonomie des services |
+| D2 | JWT validé à la gateway *et* dans chaque service | Défense en profondeur ; les services restent sûrs s'ils sont exposés | Faire confiance aux en-têtes d'identité injectés par la gateway |
+| D3 | Réservation en deux temps + saga | Le seul moyen de garder le stock correct entre deux services | Décrément direct (mises à jour perdues) ou 2PC (lourd, mal supporté) |
+| D4 | Instantané produit dénormalisé dans `order_lines` | Exactitude historique ; la lecture d'une commande ne dépend pas du catalogue | Résolution à la volée à chaque lecture — bavard et historiquement faux |
+| D5 | Format d'erreur RFC 7807 | Standard, natif dans Spring Boot 3, aucune enveloppe maison | Enveloppe `{code, message}` propriétaire |
+| D6 | Distance de Haversine à partir des coordonnées stockées | Déterministe et testable, aucune dépendance externe | API de distance routière — réaliste mais non déterministe en test |
+| D7 | DTO `PagedResponse<T>` explicite | La forme JSON de `PageImpl` de Spring est instable d'une version à l'autre | Sérialiser `Page` directement |
+| D8 | **RS256 + JWKS** pour la signature des JWT | Seul `auth-service` détient la clé privée ; compromettre un autre service ne permet pas de forger un jeton | Secret partagé HS256 — plus simple, mais chaque service pourrait émettre des jetons administrateur |
+| D9 | **Compte technique (`ROLE_SERVICE`)** pour les appels entre services | Les endpoints internes (`/inventory/reservations`, `/products/batch`) restent inatteignables depuis une session navigateur | Propager le JWT de l'utilisateur final — obligerait les endpoints internes à accepter `ROLE_CLIENT` |
+| D10 | **Aucun module Maven partagé** | Autonomie complète des services ; aucun couplage de livraison entre eux | Un module `shared-kernel` — moins de duplication, mais une reconstruction de tous les services à chaque changement |
+| D11 | **Verrouillage pessimiste** (`SELECT … FOR UPDATE`, lignes ordonnées par id) sur le chemin de réservation | Le stock est une ressource fortement disputée ; ordonner les verrous supprime les interblocages et évite une tempête de reprises au moment précis où le stock s'épuise | Verrouillage optimiste + reprise — meilleur débit à faible contention, pire comportement précisément quand cela compte |
 
-## 10. Design patterns used (and why)
+## 10. Patrons de conception utilisés (et pourquoi)
 
-| Pattern | Where | Why |
+| Patron | Où | Pourquoi |
 |---|---|---|
-| **Strategy** | `WarehouseAllocationStrategy`, `DistanceCalculator` | The allocation rule is the part most likely to change; interchangeable implementations, each unit-testable in isolation |
-| **Template Method** | `AbstractAllocationStrategy` | Both strategies share the same skeleton (filter → full coverage → split) and differ only in how candidates are ordered |
-| **Registry / Factory** | `AllocationStrategyResolver` | Selects an implementation by name at runtime (config default, overridable per request) without `if/else` chains — Open/Closed |
-| **Saga (orchestration)** | `OrderCreationService` | Distributed consistency with explicit compensating actions |
-| **Anti-corruption layer / Adapter** | `CatalogClient`, `InventoryClient` | Foreign payloads never reach the domain model |
-| **Repository** | Spring Data interfaces | Persistence abstraction over the domain |
-| **DTO + Mapper** | `dto` package + MapStruct | No JPA entity ever crosses the controller boundary |
-| **Facade** | `*Service` interfaces | A use-case-level API over repositories and clients |
-| **Chain of Responsibility** | Gateway filters | The native Spring Cloud Gateway model: auth → correlation id → routing |
-| **Builder** | Domain and DTO construction | Readable construction of objects with many fields |
+| **Strategy** | `WarehouseAllocationStrategy`, `DistanceCalculator` | La règle d'affectation est la partie la plus susceptible de changer ; implémentations interchangeables, chacune testable unitairement isolément |
+| **Template Method** | `AbstractAllocationStrategy` | Les deux stratégies partagent le même squelette (filtrage → couverture totale → fractionnement) et ne diffèrent que par l'ordonnancement des candidats |
+| **Registry / Factory** | `AllocationStrategyResolver` | Sélectionne une implémentation par son nom à l'exécution (valeur par défaut configurable, surchargeable par requête) sans chaîne de `if/else` — principe ouvert/fermé |
+| **Saga (orchestration)** | `OrderCreationService` | Cohérence distribuée avec des actions compensatoires explicites |
+| **Couche anticorruption / Adapter** | `CatalogClient`, `InventoryClient` | Les charges utiles étrangères n'atteignent jamais le modèle du domaine |
+| **Repository** | Interfaces Spring Data | Abstraction de la persistance au-dessus du domaine |
+| **DTO + Mapper** | Paquet `dto` + MapStruct | Aucune entité JPA ne franchit jamais la frontière du contrôleur |
+| **Facade** | Interfaces `*Service` | Une API de niveau cas d'utilisation au-dessus des repositories et des clients |
+| **Chain of Responsibility** | Filtres de la gateway | Le modèle natif de Spring Cloud Gateway : authentification → identifiant de corrélation → routage |
+| **Builder** | Construction des objets du domaine et des DTO | Construction lisible d'objets à nombreux champs |
 
-> SOLID note: the allocation engine is the deliberate showcase of **Open/Closed** and **Dependency
-> Inversion** — `OrderCreationService` depends on the `WarehouseAllocationStrategy` abstraction, and a third
-> strategy can be added without modifying a single existing class.
+> Note SOLID : le moteur d'affectation est la vitrine délibérée des principes **ouvert/fermé** et
+> **d'inversion des dépendances** — `OrderCreationService` dépend de l'abstraction
+> `WarehouseAllocationStrategy`, et une troisième stratégie peut être ajoutée sans modifier une seule classe
+> existante.

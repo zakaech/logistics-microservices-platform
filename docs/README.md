@@ -1,23 +1,26 @@
-# Design documentation — Phase 0
+# Documentation de conception — Phase 0
 
-Multi-Warehouse Logistics Platform. These documents are the design baseline; no code exists yet.
+Plateforme Microservices de Gestion Logistique. Ces documents constituent la référence de
+conception : ils ont été rédigés avant la moindre ligne de code, et le code implémente les
+décisions qu'ils actent.
 
-| # | Document | Contains |
+| # | Document | Contenu |
 |---|---|---|
-| 01 | [Architecture Overview](01-architecture.md) | Context and deployment diagrams, service boundaries and their justification, polyglot persistence rationale, security model, saga, decision log, design patterns |
-| 02 | [Data Model](02-data-model.md) | Per-service model: tables/collections, columns, types, constraints, indexes, cross-service references |
-| 03 | [order-service Design](03-order-service-design.md) | UML class diagram, allocation algorithm in pseudocode, the two strategies, edge cases, order state machine |
-| 04 | [Create-order Sequence](04-sequence-create-order.md) | End-to-end sequence diagram, plus failure paths and compensations |
-| 05 | [REST API Contract](05-api-contract.md) | Every endpoint: method, path, payloads, status codes, required role |
-| 06 | [Repository Layout](06-repository-layout.md) | Maven multi-module tree, package layering per service, Angular structure, Git conventions |
+| 01 | [Vue d'ensemble de l'architecture](01-architecture.md) | Diagrammes de contexte et de déploiement, frontières des services et leur justification, choix de la persistance polyglotte, modèle de sécurité, saga, journal des décisions, patrons de conception |
+| 02 | [Modèle de données](02-data-model.md) | Modèle par service : tables/collections, colonnes, types, contraintes, index, références inter-services |
+| 03 | [Conception de order-service](03-order-service-design.md) | Diagramme de classes UML, algorithme d'affectation en pseudocode, les deux stratégies, cas limites, machine à états de la commande |
+| 04 | [Séquence de création d'une commande](04-sequence-create-order.md) | Diagramme de séquence de bout en bout, chemins d'échec et compensations |
+| 05 | [Contrat de l'API REST](05-api-contract.md) | Chaque endpoint : méthode, chemin, charges utiles, codes de statut, rôle requis |
+| 06 | [Organisation du dépôt](06-repository-layout.md) | Arborescence Maven multi-modules, découpage en couches par service, structure Angular, conventions Git |
 
-## Reading order for a reviewer
+## Ordre de lecture conseillé à un relecteur
 
-1. `01` §4 and §5 — why the system is split this way and why two databases.
-2. `03` — the allocation engine, which is the point of the project.
-3. `04` — how the pieces cooperate, and what happens when one fails.
+1. `01` §4 et §5 — pourquoi le système est découpé ainsi, et pourquoi deux bases de données.
+2. `03` — le moteur d'affectation, qui est le cœur du projet.
+3. `04` — comment les pièces coopèrent, et ce qui se passe lorsque l'une d'elles échoue.
 
-## Diagrams
+## Diagrammes
 
-All diagrams are Mermaid embedded in Markdown: they are versioned as text, diffable in a pull request, and
-rendered natively by GitHub. No binary image, no external tool needed.
+Tous les diagrammes sont en Mermaid, intégrés au Markdown : ils sont versionnés comme du texte,
+comparables dans une pull request, et rendus nativement par GitHub. Aucune image binaire, aucun
+outil externe nécessaire.

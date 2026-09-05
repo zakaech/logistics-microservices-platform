@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# Build context is the REPOSITORY ROOT:
+# Le contexte de build est la RACINE DU DÉPÔT :
 #   docker build -f api-gateway/Dockerfile .
 # ---------------------------------------------------------------------------
 FROM maven:3.9-eclipse-temurin-17 AS build

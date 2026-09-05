@@ -6,19 +6,19 @@ import jakarta.validation.constraints.Size;
 
 public record AddressDto(
 
-        @NotBlank(message = "line1 is required")
-        @Size(max = 180, message = "line1 must not exceed 180 characters")
+        @NotBlank(message = "line1 est obligatoire")
+        @Size(max = 180, message = "line1 ne doit pas dépasser 180 caractères")
         String line1,
 
-        @NotBlank(message = "city is required")
-        @Size(max = 80, message = "city must not exceed 80 characters")
+        @NotBlank(message = "city est obligatoire")
+        @Size(max = 80, message = "city ne doit pas dépasser 80 caractères")
         String city,
 
-        @NotBlank(message = "postalCode is required")
-        @Size(max = 16, message = "postalCode must not exceed 16 characters")
+        @NotBlank(message = "postalCode est obligatoire")
+        @Size(max = 16, message = "postalCode ne doit pas dépasser 16 caractères")
         String postalCode,
 
-        @NotBlank(message = "country is required")
-        @Pattern(regexp = "^[A-Z]{2}$", message = "country must be an ISO-3166-1 alpha-2 code")
+        @NotBlank(message = "country est obligatoire")
+        @Pattern(regexp = "^[A-Z]{2}$", message = "country doit être un code ISO-3166-1 alpha-2")
         String country) {
 }

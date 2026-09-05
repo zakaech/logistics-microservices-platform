@@ -1,15 +1,16 @@
 /*
- * Creates the catalog-service application user with readWrite on catalog_db only.
- * The root account stays reserved for administration; no service ever uses it.
+ * Crée l'utilisateur applicatif de catalog-service, avec readWrite sur catalog_db
+ * uniquement. Le compte root reste réservé à l'administration ; aucun service ne
+ * l'utilise jamais.
  *
- * Runs only on the first initialisation of the mongo data volume.
+ * Ne s'exécute qu'à la première initialisation du volume de données mongo.
  */
 const databaseName = process.env.CATALOG_DB_NAME;
 const username = process.env.CATALOG_DB_USER;
 const password = process.env.CATALOG_DB_PASSWORD;
 
 if (!databaseName || !username || !password) {
-    throw new Error('CATALOG_DB_NAME, CATALOG_DB_USER and CATALOG_DB_PASSWORD must be set.');
+    throw new Error('CATALOG_DB_NAME, CATALOG_DB_USER et CATALOG_DB_PASSWORD doivent être définis.');
 }
 
 const catalogDb = db.getSiblingDB(databaseName);
@@ -20,4 +21,4 @@ catalogDb.createUser({
     roles: [{ role: 'readWrite', db: databaseName }]
 });
 
-print(`Created user '${username}' with readWrite on '${databaseName}'.`);
+print(`Utilisateur '${username}' créé avec readWrite sur '${databaseName}'.`);

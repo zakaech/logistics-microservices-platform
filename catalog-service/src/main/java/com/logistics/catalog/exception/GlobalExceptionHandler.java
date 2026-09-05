@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
                 .toList();
 
         ProblemDetail problem = build(HttpStatus.BAD_REQUEST, ProblemTypes.VALIDATION_FAILED,
-                "Validation failed", "One or more fields are invalid.", request);
+                "Échec de la validation", "Un ou plusieurs champs sont invalides.", request);
         problem.setProperty("errors", violations);
         return problem;
     }
@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleUnreadable(HttpMessageNotReadableException exception,
                                           HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ProblemTypes.MALFORMED_REQUEST,
-                "Malformed request", "The request body could not be parsed.", request);
+                "Requête malformée", "Le corps de la requête n'a pas pu être analysé.", request);
     }
 
     /**
@@ -54,7 +54,7 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleInvalidAttributes(InvalidProductAttributesException exception,
                                                  HttpServletRequest request) {
         ProblemDetail problem = build(HttpStatus.UNPROCESSABLE_ENTITY,
-                ProblemTypes.INVALID_ATTRIBUTES, "Invalid product attributes",
+                ProblemTypes.INVALID_ATTRIBUTES, "Attributs produit invalides",
                 exception.getMessage(), request);
         problem.setProperty("attributeErrors", exception.getViolations());
         return problem;
@@ -64,49 +64,49 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleNotFound(ResourceNotFoundException exception,
                                         HttpServletRequest request) {
         return build(HttpStatus.NOT_FOUND, ProblemTypes.RESOURCE_NOT_FOUND,
-                "Resource not found", exception.getMessage(), request);
+                "Ressource introuvable", exception.getMessage(), request);
     }
 
     @ExceptionHandler(DuplicateResourceException.class)
     public ProblemDetail handleDuplicate(DuplicateResourceException exception,
                                          HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, ProblemTypes.DUPLICATE_RESOURCE,
-                "Duplicate resource", exception.getMessage(), request);
+                "Ressource en double", exception.getMessage(), request);
     }
 
     @ExceptionHandler(DuplicateKeyException.class)
     public ProblemDetail handleDuplicateKey(DuplicateKeyException exception,
                                             HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, ProblemTypes.DUPLICATE_RESOURCE,
-                "Duplicate resource", "A document with the same unique key already exists.", request);
+                "Ressource en double", "Un document portant la même clé unique existe déjà.", request);
     }
 
     @ExceptionHandler(CategoryNotEmptyException.class)
     public ProblemDetail handleCategoryNotEmpty(CategoryNotEmptyException exception,
                                                 HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, ProblemTypes.CATEGORY_NOT_EMPTY,
-                "Category not empty", exception.getMessage(), request);
+                "Catégorie non vide", exception.getMessage(), request);
     }
 
     @ExceptionHandler(OptimisticLockingFailureException.class)
     public ProblemDetail handleOptimisticLocking(OptimisticLockingFailureException exception,
                                                  HttpServletRequest request) {
-        return build(HttpStatus.CONFLICT, ProblemTypes.CONFLICT, "Concurrent modification",
-                "The document was modified concurrently. Reload it and retry.", request);
+        return build(HttpStatus.CONFLICT, ProblemTypes.CONFLICT, "Modification concurrente",
+                "Le document a été modifié entre-temps. Rechargez-le puis réessayez.", request);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ProblemDetail handleAccessDenied(AccessDeniedException exception,
                                             HttpServletRequest request) {
         return build(HttpStatus.FORBIDDEN, ProblemTypes.ACCESS_DENIED,
-                "Access denied", "Your roles do not allow this operation.", request);
+                "Accès refusé", "Vos rôles ne permettent pas cette opération.", request);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleIllegalArgument(IllegalArgumentException exception,
                                                HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ProblemTypes.MALFORMED_REQUEST,
-                "Invalid request", exception.getMessage(), request);
+                "Requête invalide", exception.getMessage(), request);
     }
 
     @ExceptionHandler(Exception.class)
@@ -114,7 +114,7 @@ public class GlobalExceptionHandler {
         log.error("Unhandled exception on {} {}", request.getMethod(), request.getRequestURI(),
                 exception);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, ProblemTypes.INTERNAL_ERROR,
-                "Internal error", "An unexpected error occurred.", request);
+                "Erreur interne", "Une erreur inattendue s'est produite.", request);
     }
 
     private ProblemDetail build(HttpStatus status, URI type, String title, String detail,

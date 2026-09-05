@@ -38,7 +38,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/stock")
 @RequiredArgsConstructor
-@Tag(name = "Stock", description = "Stock levels and the append-only movement ledger")
+@Tag(name = "Stock", description = "Niveaux de stock et journal des mouvements en ajout seul")
 public class StockController {
 
     private static final int MAX_PAGE_SIZE = 100;
@@ -47,7 +47,7 @@ public class StockController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER', 'ADMIN')")
-    @Operation(summary = "Stock levels, filtered by warehouse or by product")
+    @Operation(summary = "Niveaux de stock, filtrés par entrepôt ou par produit")
     public PagedResponse<StockItemResponse> list(
             @RequestParam(required = false) UUID warehouseId,
             @RequestParam(required = false) String productId,
@@ -58,7 +58,7 @@ public class StockController {
 
     @GetMapping("/item")
     @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER', 'ADMIN')")
-    @Operation(summary = "One stock level, addressed by warehouse and product")
+    @Operation(summary = "Un niveau de stock, identifié par entrepôt et produit")
     public StockItemResponse findOne(@RequestParam UUID warehouseId,
                                      @RequestParam String productId) {
         return stockService.findOne(warehouseId, productId);
@@ -66,7 +66,7 @@ public class StockController {
 
     @PutMapping
     @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER', 'ADMIN')")
-    @Operation(summary = "Set an ABSOLUTE stock level; creates the line if the product is new here")
+    @Operation(summary = "Définir un niveau de stock ABSOLU ; crée la ligne si le produit est nouveau sur ce site")
     public StockItemResponse upsert(@Valid @RequestBody UpsertStockItemRequest request) {
         return stockService.upsert(request);
     }
@@ -74,7 +74,7 @@ public class StockController {
     @PostMapping("/movements")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER', 'ADMIN')")
-    @Operation(summary = "Record a RELATIVE physical movement: inbound, outbound or adjustment")
+    @Operation(summary = "Enregistrer un mouvement physique RELATIF : entrée, sortie ou ajustement")
     public StockMovementResponse recordMovement(
             @Valid @RequestBody CreateStockMovementRequest request) {
         return stockService.recordMovement(request);
@@ -82,7 +82,7 @@ public class StockController {
 
     @GetMapping("/movements")
     @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER', 'ADMIN')")
-    @Operation(summary = "Movement history, the audit trail behind every stock level")
+    @Operation(summary = "Historique des mouvements, la piste d'audit derrière chaque niveau de stock")
     public PagedResponse<StockMovementResponse> movements(
             @RequestParam(required = false) UUID warehouseId,
             @RequestParam(required = false) String productId,

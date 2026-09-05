@@ -98,7 +98,7 @@ public class Reservation {
     public void transitionTo(ReservationStatus target) {
         if (status != ReservationStatus.ACTIVE) {
             throw new IllegalStateException(
-                    "Reservation " + reference + " is " + status + " and can no longer change.");
+                    "La réservation " + reference + " est " + status + " et ne peut plus changer.");
         }
         if (target == ReservationStatus.ACTIVE) {
             throw new IllegalStateException("A reservation cannot return to ACTIVE.");

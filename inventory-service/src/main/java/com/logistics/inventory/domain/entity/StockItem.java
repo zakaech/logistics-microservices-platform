@@ -93,8 +93,8 @@ public class StockItem {
     /** Promises stock to an order. Does not touch what is physically present. */
     public void reserve(int quantity) {
         if (!canReserve(quantity)) {
-            throw new IllegalStateException("Cannot reserve " + quantity + " of product "
-                    + productId + ": only " + availableQuantity() + " available.");
+            throw new IllegalStateException("Réservation impossible de " + quantity + " unité(s) du produit "
+                    + productId + " : seulement " + availableQuantity() + " disponible(s).");
         }
         this.quantityReserved += quantity;
     }
@@ -102,8 +102,8 @@ public class StockItem {
     /** Gives a promise back, on cancellation or expiry. */
     public void release(int quantity) {
         if (quantity <= 0 || quantity > quantityReserved) {
-            throw new IllegalStateException("Cannot release " + quantity + " of product "
-                    + productId + ": only " + quantityReserved + " reserved.");
+            throw new IllegalStateException("Libération impossible de " + quantity + " unité(s) du produit "
+                    + productId + " : seulement " + quantityReserved + " réservée(s).");
         }
         this.quantityReserved -= quantity;
     }
@@ -114,8 +114,8 @@ public class StockItem {
      */
     public void shipReserved(int quantity) {
         if (quantity <= 0 || quantity > quantityReserved) {
-            throw new IllegalStateException("Cannot ship " + quantity + " of product "
-                    + productId + ": only " + quantityReserved + " reserved.");
+            throw new IllegalStateException("Expédition impossible de " + quantity + " unité(s) du produit "
+                    + productId + " : seulement " + quantityReserved + " réservée(s).");
         }
         this.quantityReserved -= quantity;
         this.quantityOnHand -= quantity;
@@ -124,7 +124,7 @@ public class StockItem {
     /** Goods received. */
     public void receive(int quantity) {
         if (quantity <= 0) {
-            throw new IllegalArgumentException("Received quantity must be positive.");
+            throw new IllegalArgumentException("La quantité reçue doit être strictement positive.");
         }
         this.quantityOnHand += quantity;
     }
@@ -138,12 +138,12 @@ public class StockItem {
     public void adjust(int delta) {
         int target = this.quantityOnHand + delta;
         if (target < 0) {
-            throw new IllegalStateException("Adjustment would make on-hand negative for product "
+            throw new IllegalStateException("L'ajustement rendrait le stock physique négatif pour le produit "
                     + productId + ".");
         }
         if (target < quantityReserved) {
-            throw new IllegalStateException("Adjustment would leave " + quantityReserved
-                    + " reserved units of product " + productId + " unbacked by physical stock.");
+            throw new IllegalStateException("L'ajustement laisserait " + quantityReserved
+                    + " unité(s) réservée(s) du produit " + productId + " sans stock physique en contrepartie.");
         }
         this.quantityOnHand = target;
     }

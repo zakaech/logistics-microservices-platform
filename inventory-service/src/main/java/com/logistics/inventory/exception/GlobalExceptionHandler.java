@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {
                 .toList();
 
         ProblemDetail problem = build(HttpStatus.BAD_REQUEST, ProblemTypes.VALIDATION_FAILED,
-                "Validation failed", "One or more fields are invalid.", request);
+                "Échec de la validation", "Un ou plusieurs champs sont invalides.", request);
         problem.setProperty("errors", violations);
         return problem;
     }
@@ -44,7 +44,7 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleUnreadable(HttpMessageNotReadableException exception,
                                           HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ProblemTypes.MALFORMED_REQUEST,
-                "Malformed request", "The request body could not be parsed.", request);
+                "Requête malformée", "Le corps de la requête n'a pas pu être analysé.", request);
     }
 
     /**
@@ -55,7 +55,7 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleInsufficientStock(InsufficientStockException exception,
                                                  HttpServletRequest request) {
         ProblemDetail problem = build(HttpStatus.CONFLICT, ProblemTypes.INSUFFICIENT_STOCK,
-                "Insufficient stock", exception.getMessage(), request);
+                "Stock insuffisant", exception.getMessage(), request);
         problem.setProperty("shortages", exception.getShortages());
         return problem;
     }
@@ -64,7 +64,7 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleInvalidReservationState(InvalidReservationStateException exception,
                                                        HttpServletRequest request) {
         ProblemDetail problem = build(HttpStatus.CONFLICT, ProblemTypes.INVALID_RESERVATION_STATE,
-                "Invalid reservation state", exception.getMessage(), request);
+                "État de réservation invalide", exception.getMessage(), request);
         problem.setProperty("currentStatus", exception.getCurrentStatus());
         return problem;
     }
@@ -73,14 +73,14 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleNotFound(ResourceNotFoundException exception,
                                         HttpServletRequest request) {
         return build(HttpStatus.NOT_FOUND, ProblemTypes.RESOURCE_NOT_FOUND,
-                "Resource not found", exception.getMessage(), request);
+                "Ressource introuvable", exception.getMessage(), request);
     }
 
     @ExceptionHandler(DuplicateResourceException.class)
     public ProblemDetail handleDuplicate(DuplicateResourceException exception,
                                          HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, ProblemTypes.DUPLICATE_RESOURCE,
-                "Duplicate resource", exception.getMessage(), request);
+                "Ressource en double", exception.getMessage(), request);
     }
 
     /**
@@ -93,15 +93,15 @@ public class GlobalExceptionHandler {
                                              HttpServletRequest request) {
         log.warn("Database rejected a write on {} {}: {}", request.getMethod(),
                 request.getRequestURI(), exception.getMostSpecificCause().getMessage());
-        return build(HttpStatus.CONFLICT, ProblemTypes.CONFLICT, "Conflicting write",
-                "The operation violates a stock or uniqueness constraint.", request);
+        return build(HttpStatus.CONFLICT, ProblemTypes.CONFLICT, "Écriture en conflit",
+                "L'opération viole une contrainte de stock ou d'unicité.", request);
     }
 
     @ExceptionHandler(OptimisticLockingFailureException.class)
     public ProblemDetail handleOptimisticLocking(OptimisticLockingFailureException exception,
                                                  HttpServletRequest request) {
-        return build(HttpStatus.CONFLICT, ProblemTypes.CONFLICT, "Concurrent modification",
-                "The record was modified concurrently. Reload it and retry.", request);
+        return build(HttpStatus.CONFLICT, ProblemTypes.CONFLICT, "Modification concurrente",
+                "L'enregistrement a été modifié entre-temps. Rechargez-le puis réessayez.", request);
     }
 
     /**
@@ -112,15 +112,15 @@ public class GlobalExceptionHandler {
     public ProblemDetail handlePessimisticLocking(PessimisticLockingFailureException exception,
                                                   HttpServletRequest request) {
         log.warn("Lock acquisition failed on {} {}", request.getMethod(), request.getRequestURI());
-        return build(HttpStatus.CONFLICT, ProblemTypes.CONFLICT, "Stock temporarily locked",
-                "The stock rows are being updated by another operation. Retry shortly.", request);
+        return build(HttpStatus.CONFLICT, ProblemTypes.CONFLICT, "Stock temporairement verrouillé",
+                "Les lignes de stock sont en cours de mise à jour par une autre opération. Réessayez dans un instant.", request);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ProblemDetail handleAccessDenied(AccessDeniedException exception,
                                             HttpServletRequest request) {
         return build(HttpStatus.FORBIDDEN, ProblemTypes.ACCESS_DENIED,
-                "Access denied", "Your roles do not allow this operation.", request);
+                "Accès refusé", "Vos rôles ne permettent pas cette opération.", request);
     }
 
     /**
@@ -130,7 +130,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     public ProblemDetail handleDomainRule(RuntimeException exception, HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, ProblemTypes.CONFLICT,
-                "Operation refused", exception.getMessage(), request);
+                "Opération refusée", exception.getMessage(), request);
     }
 
     @ExceptionHandler(Exception.class)
@@ -138,7 +138,7 @@ public class GlobalExceptionHandler {
         log.error("Unhandled exception on {} {}", request.getMethod(), request.getRequestURI(),
                 exception);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, ProblemTypes.INTERNAL_ERROR,
-                "Internal error", "An unexpected error occurred.", request);
+                "Erreur interne", "Une erreur inattendue s'est produite.", request);
     }
 
     private ProblemDetail build(HttpStatus status, URI type, String title, String detail,

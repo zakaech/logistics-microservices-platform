@@ -54,10 +54,10 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Transactional(readOnly = true)
     public RefreshToken verify(String rawToken) {
         RefreshToken token = refreshTokenRepository.findByTokenHash(hash(rawToken))
-                .orElseThrow(() -> new InvalidTokenException("Unknown refresh token."));
+                .orElseThrow(() -> new InvalidTokenException("Refresh token inconnu."));
 
         if (!token.isUsableAt(clock.instant())) {
-            throw new InvalidTokenException("The refresh token has expired or been revoked.");
+            throw new InvalidTokenException("Le refresh token a expiré ou a été révoqué.");
         }
         return token;
     }

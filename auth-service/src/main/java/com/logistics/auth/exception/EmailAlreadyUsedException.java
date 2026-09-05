@@ -4,6 +4,6 @@ package com.logistics.auth.exception;
 public class EmailAlreadyUsedException extends RuntimeException {
 
     public EmailAlreadyUsedException(String email) {
-        super("An account already exists for '" + email + "'.");
+        super("Un compte existe déjà pour '" + email + "'.");
     }
 }

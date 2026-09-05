@@ -36,21 +36,21 @@ public class ProblemResponseWriter {
     private final ObjectMapper objectMapper;
 
     public Mono<Void> unauthorized(ServerWebExchange exchange, String detail) {
-        return write(exchange, HttpStatus.UNAUTHORIZED, UNAUTHORIZED_TYPE, "Unauthorized", detail);
+        return write(exchange, HttpStatus.UNAUTHORIZED, UNAUTHORIZED_TYPE, "Non authentifié", detail);
     }
 
     public Mono<Void> serviceUnavailable(ServerWebExchange exchange, String detail) {
         return write(exchange, HttpStatus.SERVICE_UNAVAILABLE, SERVICE_UNAVAILABLE_TYPE,
-                "Service unavailable", detail);
+                "Service indisponible", detail);
     }
 
     public Mono<Void> notFound(ServerWebExchange exchange, String detail) {
-        return write(exchange, HttpStatus.NOT_FOUND, NOT_FOUND_TYPE, "Resource not found", detail);
+        return write(exchange, HttpStatus.NOT_FOUND, NOT_FOUND_TYPE, "Ressource introuvable", detail);
     }
 
     public Mono<Void> internalError(ServerWebExchange exchange, String detail) {
         return write(exchange, HttpStatus.INTERNAL_SERVER_ERROR, INTERNAL_ERROR_TYPE,
-                "Internal error", detail);
+                "Erreur interne", detail);
     }
 
     private Mono<Void> write(ServerWebExchange exchange, HttpStatus status, URI type,

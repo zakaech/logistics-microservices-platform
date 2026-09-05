@@ -357,10 +357,16 @@ lettres ISO-3166. **`customerId` est délibérément absent de la charge utile**
 
 | Méthode | Chemin | Rôle | Accès |
 |---|---|---|---|
-| `GET` | `/actuator/health` | Vivacité/disponibilité, utilisé par les healthchecks Docker Compose | interne |
-| `GET` | `/actuator/info` | Version de build et identifiant de commit | interne |
-| `GET` | `/v3/api-docs` | Spécification OpenAPI 3 par service | interne |
-| `GET` | `/swagger-ui.html` | Documentation interactive | `ADMIN` (profil dev : ouvert) |
+| `GET` | `/actuator/health` | Vivacité/disponibilité, utilisé par les healthchecks Docker Compose | ouvert |
+| `GET` | `/actuator/info` | Version de build et identifiant de commit | ouvert |
+| `GET` | `/v3/api-docs` | Spécification OpenAPI 3 par service | ouvert |
+| `GET` | `/swagger-ui.html` | Documentation interactive | ouvert |
+
+> **Ces quatre chemins sont en `permitAll` dans tous les profils**, sans distinction dev/production :
+> ils figurent dans la liste publique de chaque `SecurityConfig`. Ce n'est pas un oubli mais une
+> conséquence de la topologie — les ports des services ne sont publiés que par
+> `docker-compose.override.yml`, en développement, et restent inatteignables depuis l'extérieur en
+> production. Exposer réellement ces services imposerait de restreindre ces chemins avant.
 
 ## 6. Matrice rôle × endpoint (récapitulatif)
 

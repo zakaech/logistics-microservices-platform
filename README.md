@@ -213,7 +213,7 @@ git clone <url-du-depot> logistics-microservices-platform
 cd logistics-microservices-platform
 
 cp .env.example .env        # puis éditez-le : toutes les valeurs sont des marqueurs
-docker compose up --build   # premier lancement : cinq images à construire, quelques minutes
+docker compose up --build   # premier lancement : six images à construire, quelques minutes
 
 ./scripts/seed-demo-data.sh # quatre entrepôts, huit produits, stocks réalistes
 ```
@@ -290,9 +290,15 @@ de Vitest généré par Angular 21.
 
 Prérequis hors Docker : JDK 17+ et Maven 3.9+ pour le back-end, Node 22.12+ pour le front-end.
 
-Au-delà des tests unitaires, le comportement de bout en bout est vérifié par **191 assertions**
-exécutées contre la pile en fonctionnement, dont 67 empruntant exactement le chemin HTTP du
-navigateur (nginx, puis gateway).
+Les deux commandes ci-dessus sont **la totalité de la suite automatisée du dépôt** : 134 tests, tous
+reproductibles après un clone.
+
+Au-delà, une **campagne de validation manuelle** a été menée contre la pile en fonctionnement lors de
+la finalisation : **191 assertions**, dont 67 empruntant exactement le chemin HTTP du navigateur
+(nginx, puis gateway). Ces vérifications ont été conduites au moyen de scripts ponctuels **qui ne
+sont pas versionnés ici** : le chiffre documente une campagne effectuée, pas une suite que ce dépôt
+permet de rejouer. Le parcours correspondant reste exécutable à la main — voir « Données de
+démonstration » ci-dessus.
 
 ---
 
@@ -374,16 +380,19 @@ regardé de près.
 
 ### Ce qui est vérifié, et ce qui ne l'est pas
 
-Le comportement de bout en bout est couvert par **191 assertions** contre la pile en fonctionnement
-et **134 tests unitaires** (101 back-end, 33 front-end). Ce que cela ne couvre pas :
+La suite automatisée du dépôt compte **134 tests unitaires** (101 back-end, 33 front-end). S'y ajoute
+une campagne manuelle de **191 assertions** contre la pile en fonctionnement, dont les scripts ne sont
+pas versionnés — elle atteste d'une validation faite, elle n'est pas rejouable depuis ce dépôt. Ce que
+l'ensemble ne couvre pas :
 
 - **Le test de concurrence ne s'exécute pas sur toutes les machines.**
   `ReservationConcurrencyIT` lance 40 commandes concurrentes sur 10 unités et vérifie qu'il n'y a
   aucune survente. Testcontainers ne parvient pas à dialoguer avec Docker Engine 29 — son client
   négocie une version d'API que le moteur a retirée — et le test **se désactive de lui-même** plutôt
-  que d'échouer. Il s'exécute sur une CI Linux. Sur une telle machine, la garantie anti-survente
-  repose donc sur la conception et sur la contrainte en base, non sur un test concurrent réellement
-  exécuté. La nuance mérite d'être connue avant de reprendre l'affirmation.
+  que d'échouer. Il devrait s'exécuter sur une CI Linux, mais **cela n'a pas encore été observé** :
+  aucune CI n'est en place à ce jour. En l'état, la garantie anti-survente repose donc sur la
+  conception et sur la contrainte en base, non sur un test concurrent réellement exécuté. La nuance
+  mérite d'être connue avant de reprendre l'affirmation.
 - **Aucun test au niveau du navigateur.** Le front-end est vérifié par son chemin HTTP exact et par
   des tests unitaires, pas en pilotant un navigateur. Playwright comblerait ce manque.
 - **Aucun test de charge.** Aucun chiffre de débit ou de latence n'apparaît dans ce dépôt, parce
@@ -439,7 +448,10 @@ logistics-microservices-platform/
 ├── .env.example                 # toutes les variables requises, documentées, sans valeur réelle
 ├── scripts/
 │   └── seed-demo-data.sh        # jeu de démonstration, chargé via l'API publique
-├── docs/                        # documents de conception et captures d'écran
+├── infrastructure/              # init des bases, monté par docker-compose au premier démarrage
+│   ├── postgres/init/           # trois bases logiques, un utilisateur dédié par service
+│   └── mongo/init/              # utilisateur catalog_db au privilège minimal
+├── docs/                        # documents de conception et six captures d'écran
 ├── api-gateway/                 # routage, authentification en périphérie, propagation d'identité
 ├── auth-service/                # identités, rôles, émission des JWT         (PostgreSQL)
 ├── catalog-service/             # produits, catégories, schémas d'attributs   (MongoDB)

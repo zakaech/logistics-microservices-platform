@@ -4,6 +4,10 @@
 > l'implémentation**. Là où le code livré s'en écarte, c'est le dépôt qui fait foi — notamment la seconde
 > stratégie, finalement nommée `SingleShipmentAllocationStrategy`, le script de démonstration
 > `scripts/seed-demo-data.sh`, et le répertoire racine `logistics-microservices-platform/`.
+>
+> Les arborescences ci-dessous sont donc celles **projetées**, non un inventaire du dépôt actuel.
+> Deux écarts méritent d'être signalés ici : l'écran `admin/allocation-simulator` **n'a pas été
+> implémenté**, et aucun test ArchUnit n'existe (voir §4 et §6).
 
 ## 1. Pourquoi un monorepo
 
@@ -195,9 +199,11 @@ order-service/
 | `repository` | `domain` | Contenir des règles métier |
 | `client` | `client.dto`, `domain` | Laisser fuir un DTO étranger hors de son propre paquet |
 
-Ceci est vérifié, pas seulement documenté : un test **ArchUnit** affirme que `..controller..` n'atteint
-jamais `..repository..` et que `..allocation..` n'importe rien de `org.springframework`. Ce test est
-lui-même un sujet de discussion en entretien.
+Ces règles sont aujourd'hui tenues par revue, pas par outillage : **aucun test ArchUnit n'est présent
+dans le dépôt.** Une vérification automatisée — affirmant que `..controller..` n'atteint jamais
+`..repository..`, et que `..allocation..` n'importe rien de `org.springframework` — figure parmi les
+évolutions envisagées. Tant qu'elle n'existe pas, la règle reste une convention, et il vaut mieux le
+dire que laisser croire l'inverse.
 
 ## 5. Les autres modules backend
 
@@ -245,12 +251,15 @@ routes chargées paresseusement avec `loadComponent`, une couche `HttpClient` ty
 `core/services`, et `ChangeDetectionStrategy.OnPush` partout. La version exacte d'Angular est relevée avec
 `ng version` en Phase 1 et figée dans `package.json` — elle n'est pas devinée ici.
 
-Deux écrans portent le message du projet et méritent du soin :
+Deux écrans devaient porter le message du projet. Voici ce qui a été livré :
 
-- **`orders/allocation-map`** — le détail d'une commande, montrant chaque expédition, son entrepôt et la
-  distance qui a motivé la décision.
-- **`admin/allocation-simulator`** — appelle `POST /orders/allocation-preview` avec les deux stratégies et
-  affiche les deux plans côte à côte. C'est l'écran à démontrer en entretien.
+- **`orders/allocation-map`** *(prévu)* → livré sous le nom **`orders/order-detail`** : le suivi d'une
+  commande, montrant chaque expédition, son entrepôt et la distance qui a motivé la décision. C'est
+  l'écran à démontrer en entretien.
+- **`admin/allocation-simulator`** *(prévu, **non implémenté**)* — devait appeler
+  `POST /orders/allocation-preview` et afficher les deux plans côte à côte. L'endpoint existe et est
+  fonctionnel, mais aucun écran ne l'appelle : la comparaison des deux stratégies se fait en passant
+  deux commandes réelles, comme le montre la capture `04` du README.
 
 ## 7. Conventions Git
 

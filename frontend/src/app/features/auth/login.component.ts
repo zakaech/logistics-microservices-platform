@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { ProblemDetail } from '../../core/models';
+import { IconComponent } from '../../shared/components/icon.component';
 import { LoadingBarComponent } from '../../shared/components/loading-bar.component';
 import { ProblemAlertComponent } from '../../shared/components/problem-alert.component';
 
@@ -16,64 +17,141 @@ import { ProblemAlertComponent } from '../../shared/components/problem-alert.com
 @Component({
   selector: 'app-login',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, ProblemAlertComponent, LoadingBarComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    IconComponent,
+    ProblemAlertComponent,
+    LoadingBarComponent,
+  ],
   template: `
     <div class="auth">
-      <h1>Sign in</h1>
+      <section class="auth__panel card">
+        <header class="auth__head">
+          <span class="auth__mark" aria-hidden="true"><app-icon name="package" [size]="22" /></span>
+          <div>
+            <h2 class="auth__title">Connexion</h2>
+            <p class="auth__sub">Plateforme de gestion logistique multi-entrepôts</p>
+          </div>
+        </header>
 
-      @if (sessionExpired()) {
-        <p class="auth__notice">Your session expired. Please sign in again.</p>
-      }
-
-      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-        <label for="email">Email</label>
-        <input id="email" type="email" formControlName="email" autocomplete="username" />
-        @if (form.controls.email.touched && form.controls.email.invalid) {
-          <small class="auth__error">A valid email address is required.</small>
+        @if (sessionExpired()) {
+          <p class="auth__notice" role="status">
+            <app-icon name="alert" [size]="16" />
+            Votre session a expiré. Merci de vous reconnecter.
+          </p>
         }
 
-        <label for="password">Password</label>
-        <input
-          id="password"
-          type="password"
-          formControlName="password"
-          autocomplete="current-password"
-        />
-        @if (form.controls.password.touched && form.controls.password.invalid) {
-          <small class="auth__error">Your password is required.</small>
-        }
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="field">
+            <label class="field__label" for="email">Adresse e-mail</label>
+            <input
+              class="input"
+              id="email"
+              type="email"
+              formControlName="email"
+              autocomplete="username"
+              [attr.aria-invalid]="form.controls.email.touched && form.controls.email.invalid"
+            />
+            @if (form.controls.email.touched && form.controls.email.invalid) {
+              <small class="field__error">Une adresse e-mail valide est requise.</small>
+            }
+          </div>
 
-        <app-loading-bar [loading]="loading()" label="Signing in…" />
-        <app-problem-alert [problem]="error()" />
+          <div class="field">
+            <label class="field__label" for="password">Mot de passe</label>
+            <input
+              class="input"
+              id="password"
+              type="password"
+              formControlName="password"
+              autocomplete="current-password"
+              [attr.aria-invalid]="form.controls.password.touched && form.controls.password.invalid"
+            />
+            @if (form.controls.password.touched && form.controls.password.invalid) {
+              <small class="field__error">Le mot de passe est requis.</small>
+            }
+          </div>
 
-        <button type="submit" [disabled]="loading()">Sign in</button>
-      </form>
+          <app-loading-bar [loading]="loading()" label="Connexion en cours…" />
+          <app-problem-alert [problem]="error()" />
+
+          <button type="submit" class="btn btn--primary auth__submit" [disabled]="loading()">
+            Se connecter
+          </button>
+        </form>
+      </section>
 
       <p class="auth__foot">
-        No account yet? <a routerLink="/register">Create one</a>
+        Le catalogue est consultable sans compte.
+        <a routerLink="/catalog">Parcourir le catalogue</a>
       </p>
     </div>
   `,
   styles: `
-    .auth { max-width: 22rem; margin: 3rem auto; }
-    .auth h1 { margin-bottom: 1.25rem; }
-    form { display: flex; flex-direction: column; gap: 0.35rem; }
-    label { font-size: 0.85rem; font-weight: 600; margin-top: 0.6rem; }
-    input {
-      padding: 0.55rem 0.7rem; border: 1px solid #c8d2dd;
-      border-radius: 4px; font-size: 0.95rem;
+    .auth {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--sp-4);
+      padding: var(--sp-6) var(--sp-3);
     }
-    button {
-      margin-top: 1rem; padding: 0.6rem; border: 0; border-radius: 4px;
-      background: #2c5f8a; color: #fff; font-weight: 600; cursor: pointer;
+    .auth__panel {
+      width: 100%;
+      max-width: 24rem;
+      padding: var(--sp-5);
     }
-    button:disabled { opacity: 0.6; cursor: progress; }
-    .auth__error { color: #c0392b; font-size: 0.8rem; }
+    .auth__head {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      margin-bottom: var(--sp-5);
+    }
+    .auth__mark {
+      display: grid;
+      place-items: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      flex: none;
+      border-radius: var(--radius-sm);
+      background: var(--c-primary);
+      color: #fff;
+    }
+    .auth__title {
+      font-size: 1.25rem;
+      font-weight: var(--fw-semibold);
+    }
+    .auth__sub {
+      font-size: var(--fs-small);
+      color: var(--c-text-muted);
+    }
     .auth__notice {
-      background: #fff6e0; border-left: 3px solid #d98c00;
-      padding: 0.6rem 0.8rem; font-size: 0.88rem; border-radius: 3px;
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      margin-bottom: var(--sp-4);
+      padding: var(--sp-2) var(--sp-3);
+      background: var(--c-warning-bg);
+      border: 1px solid var(--c-warning-border);
+      border-left: 3px solid var(--c-warning);
+      border-radius: var(--radius-sm);
+      font-size: var(--fs-small);
+      color: var(--c-warning);
     }
-    .auth__foot { margin-top: 1.5rem; font-size: 0.88rem; }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-3);
+    }
+    .auth__submit {
+      margin-top: var(--sp-2);
+      justify-content: center;
+      padding: 0.65rem;
+    }
+    .auth__foot {
+      font-size: var(--fs-small);
+      color: var(--c-text-muted);
+    }
   `,
 })
 export class LoginComponent {

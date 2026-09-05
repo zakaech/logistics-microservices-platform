@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { ProblemDetail } from '../../core/models';
+import { OrderStatusLabelPipe, UnavailableReasonLabelPipe } from '../pipes/label.pipe';
+import { ORDER_STATUS_LABELS, labelFor } from '../labels';
 
 /**
  * Renders an RFC 7807 problem.
@@ -11,6 +13,7 @@ import { ProblemDetail } from '../../core/models';
  */
 @Component({
   selector: 'app-problem-alert',
+  imports: [OrderStatusLabelPipe, UnavailableReasonLabelPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (problem(); as p) {
@@ -35,7 +38,7 @@ import { ProblemDetail } from '../../core/models';
           <ul class="alert__list">
             @for (line of p.unsatisfiedLines; track line.productId) {
               <li>
-                Requested {{ line.requested }}, but the whole network holds only
+                {{ line.requested }} demandé(s), mais l'ensemble du réseau n'en détient que
                 {{ line.availableAcrossNetwork }}.
               </li>
             }
@@ -45,41 +48,78 @@ import { ProblemDetail } from '../../core/models';
         @if (p.unavailableProducts?.length) {
           <ul class="alert__list">
             @for (product of p.unavailableProducts; track product.productId) {
-              <li>{{ product.productId }} — {{ product.reason.toLowerCase() }}</li>
+              <li>{{ product.productId }} — {{ product.reason | unavailableReasonLabel }}</li>
             }
           </ul>
         }
 
         @if (p.allowedTargets?.length) {
           <p class="alert__hint">
-            Currently {{ p.currentStatus }}; allowed next: {{ p.allowedTargets?.join(', ') }}
+            Statut actuel : {{ p.currentStatus | orderStatusLabel }} — transitions possibles :
+            {{ allowedLabels(p.allowedTargets) }}
           </p>
         }
 
         @if (p.requestId) {
-          <p class="alert__meta">Reference: <code>{{ p.requestId }}</code></p>
+          <p class="alert__meta">Référence : <code>{{ p.requestId }}</code></p>
         }
       </div>
     }
   `,
   styles: `
     .alert {
-      border: 1px solid #f0b4b4;
-      background: #fdf3f3;
-      border-left: 4px solid #c0392b;
-      border-radius: 4px;
-      padding: 0.85rem 1rem;
-      margin: 0.75rem 0;
+      background: var(--c-error-bg);
+      border: 1px solid var(--c-error-border);
+      border-left: 3px solid var(--c-error);
+      border-radius: var(--radius);
+      padding: var(--sp-3) var(--sp-4);
+      margin: var(--sp-3) 0;
       color: #6b1f16;
     }
-    .alert__head { display: flex; justify-content: space-between; align-items: baseline; }
-    .alert__status { font-size: 0.8rem; opacity: 0.7; }
-    .alert__detail { margin: 0.4rem 0 0; }
-    .alert__list { margin: 0.5rem 0 0; padding-left: 1.2rem; font-size: 0.9rem; }
-    .alert__hint, .alert__meta { margin: 0.5rem 0 0; font-size: 0.8rem; opacity: 0.75; }
-    code { font-family: ui-monospace, monospace; }
+    .alert__head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: var(--sp-3);
+    }
+    .alert__head strong {
+      font-size: var(--fs-body);
+      color: var(--c-error);
+    }
+    .alert__status {
+      font-size: var(--fs-label);
+      font-weight: var(--fw-semibold);
+      opacity: 0.7;
+      font-variant-numeric: tabular-nums;
+    }
+    .alert__detail {
+      margin-top: var(--sp-1);
+      font-size: var(--fs-body);
+    }
+    .alert__list {
+      margin: var(--sp-2) 0 0;
+      padding-left: 1.2rem;
+      font-size: var(--fs-small);
+    }
+    .alert__list li {
+      margin-top: 2px;
+    }
+    .alert__hint,
+    .alert__meta {
+      margin-top: var(--sp-2);
+      font-size: var(--fs-label);
+      opacity: 0.8;
+    }
+    code {
+      font-family: var(--font-mono);
+    }
   `,
 })
 export class ProblemAlertComponent {
   readonly problem = input<ProblemDetail | null>(null);
+
+  /** Libellés des transitions possibles. Les valeurs de l'API restent intactes. */
+  allowedLabels(targets: string[] | undefined): string {
+    return (targets ?? []).map((t) => labelFor(t, ORDER_STATUS_LABELS)).join(', ');
+  }
 }

@@ -5,7 +5,9 @@ import { Router, RouterLink } from '@angular/router';
 import { OrderApi } from '../../core/api/order.api';
 import { AllocationStrategy, Order, ProblemDetail } from '../../core/models';
 import { LoadingBarComponent } from '../../shared/components/loading-bar.component';
+import { IconComponent } from '../../shared/components/icon.component';
 import { ProblemAlertComponent } from '../../shared/components/problem-alert.component';
+import { StrategyLabelPipe } from '../../shared/pipes/label.pipe';
 import { CartStore } from './cart.store';
 
 /**
@@ -26,6 +28,8 @@ import { CartStore } from './cart.store';
     ReactiveFormsModule,
     RouterLink,
     CurrencyPipe,
+    StrategyLabelPipe,
+    IconComponent,
     ProblemAlertComponent,
     LoadingBarComponent,
   ],

@@ -55,8 +55,8 @@ public class AllocationStrategyResolver {
 
         WarehouseAllocationStrategy strategy = strategiesByName.get(name);
         if (strategy == null) {
-            throw new IllegalArgumentException("Unknown allocation strategy '" + name
-                    + "'. Available strategies: " + strategiesByName.keySet() + ".");
+            throw new IllegalArgumentException("Stratégie d'affectation inconnue : '" + name
+                    + "'. Stratégies disponibles : " + strategiesByName.keySet() + ".");
         }
         return strategy;
     }

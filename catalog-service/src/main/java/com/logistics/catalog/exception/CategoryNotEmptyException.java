@@ -8,6 +8,6 @@ package com.logistics.catalog.exception;
 public class CategoryNotEmptyException extends RuntimeException {
 
     public CategoryNotEmptyException(String categoryId, String reason) {
-        super("Category '" + categoryId + "' cannot be deleted: " + reason + ".");
+        super("La catégorie '" + categoryId + "' ne peut pas être supprimée : " + reason + ".");
     }
 }

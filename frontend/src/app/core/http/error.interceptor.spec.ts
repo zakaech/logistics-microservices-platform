@@ -28,8 +28,8 @@ describe('toProblemDetail', () => {
     const result = toProblemDetail(new HttpErrorResponse({ status: 0 }));
 
     expect(result.status).toBe(0);
-    expect(result.title).toBe('Network unreachable');
-    expect(result.detail).toContain('could not be reached');
+    expect(result.title).toBe('Serveur injoignable');
+    expect(result.detail).toContain('pas pu être contacté');
   });
 
   it('keeps what the server said when the body is not problem+json', () => {

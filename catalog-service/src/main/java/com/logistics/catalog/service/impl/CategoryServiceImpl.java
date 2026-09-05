@@ -44,13 +44,13 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public Category requireById(String id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category", id));
+                .orElseThrow(() -> new ResourceNotFoundException("Catégorie", id));
     }
 
     @Override
     public CategoryResponse create(CreateCategoryRequest request) {
         if (categoryRepository.existsBySlug(request.slug())) {
-            throw new DuplicateResourceException("Category", "slug", request.slug());
+            throw new DuplicateResourceException("Catégorie", "slug", request.slug());
         }
 
         String parentPath = resolveParentPath(request.parentId());
@@ -75,7 +75,7 @@ public class CategoryServiceImpl implements CategoryService {
         categoryRepository.findBySlug(request.slug())
                 .filter(other -> !other.getId().equals(id))
                 .ifPresent(other -> {
-                    throw new DuplicateResourceException("Category", "slug", request.slug());
+                    throw new DuplicateResourceException("Catégorie", "slug", request.slug());
                 });
 
         rejectCycle(category, request.parentId());
@@ -123,12 +123,12 @@ public class CategoryServiceImpl implements CategoryService {
             return;
         }
         if (newParentId.equals(category.getId())) {
-            throw new IllegalArgumentException("A category cannot be its own parent.");
+            throw new IllegalArgumentException("Une catégorie ne peut pas être son propre parent.");
         }
         Category newParent = requireById(newParentId);
         if (category.containsInSubtree(newParent.getPath())) {
             throw new IllegalArgumentException(
-                    "A category cannot be moved under one of its own descendants.");
+                    "Une catégorie ne peut pas être déplacée sous l'un de ses propres descendants.");
         }
     }
 

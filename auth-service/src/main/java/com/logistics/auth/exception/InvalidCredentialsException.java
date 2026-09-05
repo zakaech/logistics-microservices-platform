@@ -10,6 +10,6 @@ package com.logistics.auth.exception;
 public class InvalidCredentialsException extends RuntimeException {
 
     public InvalidCredentialsException() {
-        super("Invalid email or password.");
+        super("Email ou mot de passe invalide.");
     }
 }

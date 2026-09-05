@@ -15,12 +15,12 @@ import java.math.BigDecimal;
  */
 public record MoneyDto(
 
-        @NotNull(message = "amount is required")
-        @DecimalMin(value = "0.0", inclusive = false, message = "amount must be greater than 0")
-        @Digits(integer = 10, fraction = 2, message = "amount must have at most 2 decimals")
+        @NotNull(message = "amount est obligatoire")
+        @DecimalMin(value = "0.0", inclusive = false, message = "amount doit être strictement supérieur à 0")
+        @Digits(integer = 10, fraction = 2, message = "amount ne peut avoir plus de 2 décimales")
         BigDecimal amount,
 
-        @NotNull(message = "currency is required")
-        @Pattern(regexp = "^[A-Z]{3}$", message = "currency must be an ISO-4217 code, e.g. EUR")
+        @NotNull(message = "currency est obligatoire")
+        @Pattern(regexp = "^[A-Z]{3}$", message = "currency doit être un code ISO-4217, par exemple EUR")
         String currency) {
 }

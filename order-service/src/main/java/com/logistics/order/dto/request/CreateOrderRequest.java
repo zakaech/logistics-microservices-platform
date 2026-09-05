@@ -21,11 +21,11 @@ import java.util.List;
  */
 public record CreateOrderRequest(
 
-        @NotEmpty(message = "lines must contain at least one product")
-        @Size(max = 50, message = "at most 50 lines per order")
+        @NotEmpty(message = "lines doit contenir au moins un produit")
+        @Size(max = 50, message = "50 lignes au maximum par commande")
         List<@Valid OrderLineRequest> lines,
 
-        @NotNull(message = "deliveryAddress is required")
+        @NotNull(message = "deliveryAddress est obligatoire")
         @Valid DeliveryAddressDto deliveryAddress,
 
         /* Optional: falls back to the configured default strategy. */
@@ -33,12 +33,12 @@ public record CreateOrderRequest(
 
     public record OrderLineRequest(
 
-            @NotBlank(message = "productId is required")
+            @NotBlank(message = "productId est obligatoire")
             String productId,
 
-            @NotNull(message = "quantity is required")
-            @Min(value = 1, message = "quantity must be at least 1")
-            @Max(value = 1000, message = "quantity must not exceed 1000")
+            @NotNull(message = "quantity est obligatoire")
+            @Min(value = 1, message = "quantity doit valoir au moins 1")
+            @Max(value = 1000, message = "quantity ne doit pas dépasser 1000")
             Integer quantity) {
     }
 }

@@ -29,24 +29,40 @@ import java.util.Set;
 public enum OrderStatus {
 
     /** Persisted with its lines and total; no stock held yet. */
-    CREATED,
+    CREATED("Créée"),
 
     /** The engine produced a plan and inventory-service is holding the units. */
-    ALLOCATED,
+    ALLOCATED("Affectée"),
 
     /** The hold was consumed: stock has left the warehouse. */
-    CONFIRMED,
+    CONFIRMED("Confirmée"),
 
     /** Handed to the carrier. */
-    SHIPPED,
+    SHIPPED("Expédiée"),
 
-    DELIVERED,
+    DELIVERED("Livrée"),
 
     /** Cancelled before shipping; any hold has been released. */
-    CANCELLED,
+    CANCELLED("Annulée"),
 
     /** No combination of warehouses could serve it. Terminal, and keeps its reason. */
-    REJECTED;
+    REJECTED("Rejetée");
+
+    /**
+     * Libellé destiné aux messages lus par un utilisateur.
+     *
+     * <p>Purely for display. The constant name stays the contract: it is what JSON carries,
+     * what the column stores and what the front-end keys its labels on.
+     */
+    private final String label;
+
+    OrderStatus(String label) {
+        this.label = label;
+    }
+
+    public String label() {
+        return label;
+    }
 
     private static final Map<OrderStatus, Set<OrderStatus>> ALLOWED = new EnumMap<>(OrderStatus.class);
 

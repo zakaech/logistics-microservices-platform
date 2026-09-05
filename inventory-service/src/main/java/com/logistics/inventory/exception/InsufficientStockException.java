@@ -15,7 +15,7 @@ public class InsufficientStockException extends RuntimeException {
     private final transient List<Shortage> shortages;
 
     public InsufficientStockException(List<Shortage> shortages) {
-        super("Insufficient stock for " + shortages.size() + " line(s).");
+        super("Stock insuffisant pour " + shortages.size() + " ligne(s).");
         this.shortages = List.copyOf(shortages);
     }
 

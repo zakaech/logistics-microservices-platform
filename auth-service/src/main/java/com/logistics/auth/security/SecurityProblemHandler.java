@@ -38,7 +38,7 @@ public class SecurityProblemHandler implements AuthenticationEntryPoint, AccessD
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
         write(request, response, HttpStatus.UNAUTHORIZED, ProblemTypes.INVALID_TOKEN,
-                "Unauthorized", "A valid access token is required to call this endpoint.");
+                "Non authentifié", "Un jeton d'accès valide est requis pour appeler cet endpoint.");
     }
 
     @Override
@@ -46,7 +46,7 @@ public class SecurityProblemHandler implements AuthenticationEntryPoint, AccessD
                        HttpServletResponse response,
                        AccessDeniedException accessDeniedException) throws IOException {
         write(request, response, HttpStatus.FORBIDDEN, ProblemTypes.ACCESS_DENIED,
-                "Access denied", "Your roles do not allow this operation.");
+                "Accès refusé", "Vos rôles ne permettent pas cette opération.");
     }
 
     private void write(HttpServletRequest request,

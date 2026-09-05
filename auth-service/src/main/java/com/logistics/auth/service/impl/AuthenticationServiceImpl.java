@@ -106,7 +106,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         User user = rotated.entity().getUser();
 
         if (!user.isEnabled()) {
-            throw new InvalidTokenException("The account is disabled.");
+            throw new InvalidTokenException("Le compte est désactivé.");
         }
 
         TokenService.IssuedToken accessToken = tokenService.issueAccessToken(

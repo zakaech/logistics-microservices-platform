@@ -74,7 +74,7 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
         String token = extractBearerToken(request);
         if (token == null) {
             return problemWriter.unauthorized(exchange,
-                    "A Bearer access token is required to call this endpoint.");
+                    "Un jeton d'accès Bearer est requis pour appeler cet endpoint.");
         }
 
         return jwtDecoder.decode(token)
@@ -84,7 +84,7 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
                     log.debug("Rejected a token on {} {}: {}",
                             request.getMethod(), request.getPath(), error.getMessage());
                     return problemWriter.unauthorized(exchange,
-                            "The access token is invalid or has expired.");
+                            "Le jeton d'accès est invalide ou a expiré.");
                 });
     }
 

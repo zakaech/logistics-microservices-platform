@@ -79,7 +79,7 @@ public class JwtTokenService implements TokenService {
                     jwt.getClaimAsStringList(CLAIM_ROLES),
                     jwt.getExpiresAt());
         } catch (JwtException e) {
-            throw new InvalidTokenException("The token is invalid or has expired.", e);
+            throw new InvalidTokenException("Le jeton est invalide ou a expiré.", e);
         }
     }
 

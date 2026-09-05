@@ -128,8 +128,8 @@ public class StockServiceImpl implements StockService {
     @Transactional
     public StockMovementResponse recordMovement(CreateStockMovementRequest request) {
         if (!OPERATOR_POSTABLE.contains(request.type())) {
-            throw new IllegalArgumentException("Movement type " + request.type()
-                    + " is written by the reservation flow and cannot be posted directly.");
+            throw new IllegalArgumentException("Le type de mouvement " + request.type()
+                    + " est écrit par le flux de réservation et ne peut pas être saisi directement.");
         }
 
         StockItem item = requireStockItem(request.warehouseId(), request.productId());
@@ -207,7 +207,7 @@ public class StockServiceImpl implements StockService {
 
     private StockItem requireStockItem(UUID warehouseId, String productId) {
         return stockItemRepository.findByWarehouseIdAndProductId(warehouseId, productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Stock item",
+                .orElseThrow(() -> new ResourceNotFoundException("Ligne de stock",
                         productId + " in warehouse " + warehouseId));
     }
 }

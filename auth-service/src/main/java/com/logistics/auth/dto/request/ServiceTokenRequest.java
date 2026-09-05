@@ -11,9 +11,9 @@ import jakarta.validation.constraints.NotBlank;
  */
 public record ServiceTokenRequest(
 
-        @NotBlank(message = "clientId is required")
+        @NotBlank(message = "clientId est obligatoire")
         String clientId,
 
-        @NotBlank(message = "clientSecret is required")
+        @NotBlank(message = "clientSecret est obligatoire")
         String clientSecret) {
 }

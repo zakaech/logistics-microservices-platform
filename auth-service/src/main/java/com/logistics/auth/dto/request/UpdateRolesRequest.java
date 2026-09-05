@@ -8,6 +8,6 @@ import java.util.Set;
 /** Replaces the whole role set of a user. Administrator-only operation. */
 public record UpdateRolesRequest(
 
-        @NotEmpty(message = "roles must contain at least one role")
+        @NotEmpty(message = "roles doit contenir au moins un rôle")
         Set<RoleName> roles) {
 }

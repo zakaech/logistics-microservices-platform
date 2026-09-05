@@ -119,7 +119,7 @@ class RefreshTokenServiceImplTest {
 
         assertThatThrownBy(() -> service.verify("whatever"))
                 .isInstanceOf(InvalidTokenException.class)
-                .hasMessageContaining("Unknown");
+                .hasMessageContaining("inconnu");
     }
 
     @Test
@@ -130,7 +130,7 @@ class RefreshTokenServiceImplTest {
 
         assertThatThrownBy(() -> service.verify("raw"))
                 .isInstanceOf(InvalidTokenException.class)
-                .hasMessageContaining("expired or been revoked");
+                .hasMessageContaining("expiré ou a été révoqué");
     }
 
     @Test

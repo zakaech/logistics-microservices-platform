@@ -1,12 +1,12 @@
 # ---------------------------------------------------------------------------
-# Stack: PostgreSQL, MongoDB, the four business services, the gateway
-# and the Angular front-end.
+# Pile : PostgreSQL, MongoDB, les quatre services métier, la gateway et le
+# frontend Angular.
 #
-# Only the gateway publishes a port. Application services are reachable from
-# inside the network alone - and they still validate every token themselves,
-# because network isolation is a deployment detail, not a security guarantee.
+# Seule la gateway publie un port. Les services applicatifs ne sont joignables que
+# depuis l'intérieur du réseau - et ils valident malgré tout chaque jeton eux-mêmes,
+# car l'isolation réseau est un détail de déploiement, pas une garantie de sécurité.
 #
-#   cp .env.example .env   # then edit it
+#   cp .env.example .env   # puis éditez-le
 #   docker compose up --build
 # ---------------------------------------------------------------------------
 name: logistics-platform
@@ -31,8 +31,8 @@ services:
       ORDER_DB_USER: ${ORDER_DB_USER}
       ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
     volumes:
-      # Runs only on first initialisation of the volume. It creates all three
-      # service databases now so a later phase never needs `down -v`.
+      # Ne s'exécute qu'à la première initialisation du volume. Il crée dès maintenant
+      # les trois bases de service, pour qu'aucune phase ultérieure n'exige `down -v`.
       - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d:ro
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -67,7 +67,7 @@ services:
 
   auth-service:
     build:
-      # Context is the repository root: the module needs the parent pom.
+      # Le contexte est la racine du dépôt : le module a besoin du pom parent.
       context: .
       dockerfile: auth-service/Dockerfile
     container_name: logistics-auth-service
@@ -84,8 +84,9 @@ services:
       JWT_KEY_ID: ${JWT_KEY_ID}
       JWT_ACCESS_TTL: ${JWT_ACCESS_TTL}
       JWT_REFRESH_TTL: ${JWT_REFRESH_TTL}
-      # Empty is allowed: the service then generates an ephemeral key pair and
-      # logs a warning. Set both for anything beyond local development.
+      # La valeur vide est acceptée : le service génère alors une paire de clés
+      # éphémère et journalise un avertissement. Renseignez les deux au-delà du
+      # développement local.
       JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:-}
       JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:-}
       ORDER_SERVICE_CLIENT_SECRET: ${ORDER_SERVICE_CLIENT_SECRET}
@@ -173,7 +174,7 @@ services:
       ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
       JWK_SET_URI: http://auth-service:8081/api/v1/auth/.well-known/jwks.json
       JWT_ISSUER: ${JWT_ISSUER}
-      # Outbound calls go through the gateway, as decided in phase 0.
+      # Les appels sortants passent par la gateway, comme décidé en phase 0.
       GATEWAY_URI: http://api-gateway:8080
       ORDER_SERVICE_CLIENT_SECRET: ${ORDER_SERVICE_CLIENT_SECRET}
       ALLOCATION_DEFAULT_STRATEGY: ${ALLOCATION_DEFAULT_STRATEGY:-nearest}
@@ -206,8 +207,8 @@ services:
       AUTH_SERVICE_URI: http://auth-service:8081
       CATALOG_SERVICE_URI: http://catalog-service:8082
       INVENTORY_SERVICE_URI: http://inventory-service:8083
-      # order-service arrives in phase 4; until then this route answers 503 at call
-      # time rather than preventing the gateway from starting.
+      # order-service arrive en phase 4 ; d'ici là, cette route répond 503 au moment
+      # de l'appel plutôt que d'empêcher la gateway de démarrer.
       ORDER_SERVICE_URI: http://order-service:8084
       JWK_SET_URI: http://auth-service:8081/api/v1/auth/.well-known/jwks.json
       JWT_ISSUER: ${JWT_ISSUER}
@@ -222,8 +223,8 @@ services:
 
   frontend:
     build:
-      # Context is the frontend directory: unlike the Java modules, it has no parent
-      # manifest to inherit from.
+      # Le contexte est le répertoire frontend : contrairement aux modules Java, il
+      # n'hérite d'aucun manifeste parent.
       context: ./frontend
       dockerfile: Dockerfile
     container_name: logistics-frontend

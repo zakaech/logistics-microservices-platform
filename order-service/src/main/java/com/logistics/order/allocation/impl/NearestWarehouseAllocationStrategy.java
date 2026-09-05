@@ -39,8 +39,9 @@ public class NearestWarehouseAllocationStrategy extends AbstractAllocationStrate
 
     @Override
     public String description() {
-        return "Ships from the closest warehouses first, splitting the order when the nearest "
-                + "site cannot cover it. Minimises distance, not the number of shipments.";
+        return "Expédie d'abord depuis les entrepôts les plus proches, en fractionnant la "
+                + "commande lorsque le site le plus proche ne peut pas la couvrir. Minimise la "
+                + "distance, pas le nombre d'expéditions.";
     }
 
     @Override

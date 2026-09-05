@@ -49,17 +49,17 @@ public class GatewayExceptionHandler implements ErrorWebExceptionHandler {
             log.warn("Downstream unreachable for {} {}: {}",
                     exchange.getRequest().getMethod(), path, rootCause(throwable).toString());
             return problemWriter.serviceUnavailable(exchange,
-                    "The service handling this request is currently unavailable.");
+                    "Le service qui traite cette requête est actuellement indisponible.");
         }
 
         if (throwable instanceof ResponseStatusException statusException
                 && statusException.getStatusCode().value() == 404) {
-            return problemWriter.notFound(exchange, "No route matches this path.");
+            return problemWriter.notFound(exchange, "Aucune route ne correspond à ce chemin.");
         }
 
         log.error("Unhandled gateway error on {} {}", exchange.getRequest().getMethod(), path,
                 throwable);
-        return problemWriter.internalError(exchange, "An unexpected error occurred.");
+        return problemWriter.internalError(exchange, "Une erreur inattendue s'est produite.");
     }
 
     /**

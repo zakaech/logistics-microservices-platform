@@ -13,7 +13,7 @@ public class InvalidProductAttributesException extends RuntimeException {
     private final transient List<AttributeViolation> violations;
 
     public InvalidProductAttributesException(List<AttributeViolation> violations) {
-        super("The product attributes do not match the category schema.");
+        super("Les attributs du produit ne correspondent pas au schéma de la catégorie.");
         this.violations = List.copyOf(violations);
     }
 
@@ -30,17 +30,17 @@ public class InvalidProductAttributesException extends RuntimeException {
 
         public static AttributeViolation missing(String key) {
             return new AttributeViolation(key, "MISSING_REQUIRED",
-                    "Attribute '" + key + "' is required by the category schema.");
+                    "L'attribut '" + key + "' est requis par le schéma de la catégorie.");
         }
 
         public static AttributeViolation unknown(String key) {
             return new AttributeViolation(key, "UNKNOWN_ATTRIBUTE",
-                    "Attribute '" + key + "' is not declared by the category schema.");
+                    "L'attribut '" + key + "' n'est pas déclaré par le schéma de la catégorie.");
         }
 
         public static AttributeViolation invalidType(String key, String expectedType, String value) {
             return new AttributeViolation(key, "INVALID_TYPE",
-                    "Attribute '" + key + "' must be a " + expectedType + ", got '" + value + "'.");
+                    "L'attribut '" + key + "' doit être de type " + expectedType + ", reçu '" + value + "'.");
         }
     }
 }

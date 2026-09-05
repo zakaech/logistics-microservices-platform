@@ -1,27 +1,33 @@
-# 06 — Repository Layout (Maven multi-module monorepo)
+# 06 — Organisation du dépôt (monorepo Maven multi-modules)
 
-## 1. Why a monorepo
+> Document de conception de la Phase 0 : il décrit l'organisation **telle qu'elle était prévue avant
+> l'implémentation**. Là où le code livré s'en écarte, c'est le dépôt qui fait foi — notamment la seconde
+> stratégie, finalement nommée `SingleShipmentAllocationStrategy`, le script de démonstration
+> `scripts/seed-demo-data.sh`, et le répertoire racine `logistics-microservices-platform/`.
 
-Five backend modules plus a frontend, developed by one person, released together. A monorepo gives one clone,
-one `mvn verify`, one `docker compose up`, and an atomic commit when a change crosses services (e.g. adding a
-field to the availability contract touches both `inventory-service` and `order-service`).
+## 1. Pourquoi un monorepo
 
-The counter-argument — independent release cycles per service — does not apply here and would only add
-friction. Worth saying explicitly: *the monorepo is a repository layout choice, not an architecture choice.*
-The services remain independently deployable, and each has its own Dockerfile and its own database.
+Cinq modules backend plus un frontend, développés par une seule personne, livrés ensemble. Un monorepo offre
+un seul clone, un seul `mvn verify`, un seul `docker compose up`, et un commit atomique lorsqu'un changement
+traverse plusieurs services (par exemple, ajouter un champ au contrat de disponibilité touche à la fois
+`inventory-service` et `order-service`).
 
-## 2. Top-level tree
+Le contre-argument — des cycles de livraison indépendants par service — ne s'applique pas ici et n'ajouterait
+que de la friction. À dire explicitement : *le monorepo est un choix d'organisation du dépôt, pas un choix
+d'architecture.* Les services restent déployables indépendamment, et chacun possède son propre Dockerfile et
+sa propre base de données.
+
+## 2. Arborescence de premier niveau
 
 ```
 logistics-platform/
-├── pom.xml                          # aggregator + dependencyManagement (packaging: pom)
-├── docker-compose.yml               # full stack: databases + 5 services + frontend
-├── docker-compose.override.yml      # local dev: exposed ports, hot reload
-├── .env.example                     # every required variable, documented, no real value
+├── pom.xml                          # agrégateur + dependencyManagement (packaging : pom)
+├── docker-compose.yml               # pile complète : bases de données + 5 services + frontend
+├── docker-compose.override.yml      # dev local : publie les ports gardés internes dans le fichier de base
+├── .env.example                     # toutes les variables requises, documentées, sans valeur réelle
 ├── .gitignore                       # target/, node_modules/, .env, *.log, .idea/
 ├── .editorconfig
-├── README.md                        # what it is, how to run it, architecture in 10 lines
-├── docker-compose.override.yml      # local dev: publishes ports kept internal in the base file
+├── README.md                        # ce que c'est, comment le lancer, l'architecture en 10 lignes
 │
 ├── docs/
 │   ├── 01-architecture.md
@@ -33,9 +39,9 @@ logistics-platform/
 │
 ├── infrastructure/
 │   ├── postgres/
-│   │   └── init/01-create-databases.sql     # 3 databases + 3 users, one per service
+│   │   └── init/01-create-databases.sql     # 3 bases + 3 utilisateurs, un par service
 │   └── mongo/
-│       └── init/01-create-user.js           # catalog_db user with least privilege
+│       └── init/01-create-user.js           # utilisateur catalog_db au privilège minimal
 │
 ├── api-gateway/
 ├── auth-service/
@@ -45,7 +51,7 @@ logistics-platform/
 └── frontend/
 ```
 
-## 3. Parent POM
+## 3. POM parent
 
 ```xml
 <groupId>com.logistics</groupId>
@@ -61,50 +67,52 @@ logistics-platform/
 </modules>
 ```
 
-Three deliberate choices:
+Trois choix délibérés :
 
-1. **No `spring-boot-starter-parent` as `<parent>`.** The Spring Boot and Spring Cloud BOMs are *imported*
-   into `<dependencyManagement>` instead, which keeps `logistics-platform` as the real parent and leaves room
-   for our own plugin configuration. Versions are declared once, in properties, and inherited by every module.
-2. **Every version pinned in the parent** — Java release, Spring Boot, Spring Cloud, MapStruct, testcontainers,
-   Lombok. No module ever declares a dependency version of its own. Exact versions are chosen and frozen at
-   Phase 1 from the current release train, not guessed here.
+1. **Pas de `spring-boot-starter-parent` en `<parent>`.** Les BOM Spring Boot et Spring Cloud sont
+   *importés* dans `<dependencyManagement>`, ce qui laisse `logistics-platform` comme véritable parent et
+   laisse la place à notre propre configuration de plugins. Les versions sont déclarées une fois, dans les
+   propriétés, et héritées par chaque module.
+2. **Toutes les versions figées dans le parent** — release Java, Spring Boot, Spring Cloud, MapStruct,
+   Testcontainers, Lombok. Aucun module ne déclare jamais de version de dépendance qui lui soit propre. Les
+   versions exactes sont choisies et gelées en Phase 1 depuis le train de publication courant, elles ne sont
+   pas devinées ici.
+3. **Aucun module `shared-kernel`** (décision D10). Chaque service possède son propre
+   `GlobalExceptionHandler`, son `PagedResponse<T>`, sa configuration de resource server et ses constantes de
+   rôles — environ 150 lignes dupliquées par service. Cette duplication est délibérée : un module technique
+   partagé crée un couplage de livraison, où changer une classe force une reconstruction et un redéploiement
+   des quatre services, ce qu'un découpage en microservices est précisément censé éviter. Le code dupliqué
+   est du code d'infrastructure, pas de la logique métier ; le jour où il commencera à diverger, cette
+   divergence sera une décision légitime au niveau du service plutôt qu'un conflit de fusion.
 
-3. **No `shared-kernel` module** (decision D10). Each service owns its own `GlobalExceptionHandler`,
-   `PagedResponse<T>`, resource-server configuration and role constants — roughly 150 duplicated lines per
-   service. This duplication is deliberate: a shared technical module creates a release coupling, where
-   changing one class forces a rebuild and a redeploy of all four services, which is exactly what a
-   microservice split is meant to avoid. The duplicated code is boilerplate, not business logic; the day it
-   starts to diverge, that divergence is a legitimate service-level decision rather than a merge conflict.
+Le module `frontend` n'est *pas* un module Maven : mêler un build Node au réacteur Maven n'apporte rien et
+ralentit chaque build backend. Il possède son propre `package.json` et son propre Dockerfile.
 
-The `frontend` module is *not* a Maven module: mixing a Node build into the Maven reactor buys nothing and
-slows every backend build. It has its own `package.json` and its own Dockerfile.
+## 4. Structure canonique d'un service (exemple : `order-service`)
 
-## 4. Canonical service structure (example: `order-service`)
-
-The same layering applies to all four business services; only the domain differs.
+Le même découpage en couches s'applique aux quatre services métier ; seul le domaine diffère.
 
 ```
 order-service/
 ├── pom.xml
-├── Dockerfile                       # multi-stage: maven build → eclipse-temurin JRE, non-root user
+├── Dockerfile                       # multi-stage : build maven → JRE eclipse-temurin, utilisateur non root
 └── src/
     ├── main/
     │   ├── java/com/logistics/order/
     │   │   ├── OrderServiceApplication.java
     │   │   │
-    │   │   ├── config/                        # Spring configuration only, no business logic
-    │   │   │   ├── SecurityConfig.java        # resource server, role mapping, route rules
-    │   │   │   ├── RestClientConfig.java      # timeouts, base URL, interceptors
+    │   │   ├── config/                        # configuration Spring uniquement, aucune logique métier
+    │   │   │   ├── SecurityConfig.java        # resource server, mapping des rôles, règles de routes
+    │   │   │   ├── RestClientConfig.java      # timeouts, URL de base, intercepteurs
     │   │   │   ├── JpaAuditingConfig.java
     │   │   │   ├── OpenApiConfig.java
     │   │   │   └── AllocationProperties.java  # @ConfigurationProperties("logistics.allocation")
     │   │   │
-    │   │   ├── controller/                    # HTTP only: bind, delegate, map, return
+    │   │   ├── controller/                    # HTTP seulement : lier, déléguer, mapper, renvoyer
     │   │   │   ├── OrderController.java
     │   │   │   └── AllocationPreviewController.java
     │   │   │
-    │   │   ├── service/                       # use cases (interfaces) + orchestration
+    │   │   ├── service/                       # cas d'usage (interfaces) + orchestration
     │   │   │   ├── OrderService.java
     │   │   │   ├── AllocationPreviewService.java
     │   │   │   ├── OrderNumberGenerator.java
@@ -112,12 +120,12 @@ order-service/
     │   │   │       ├── OrderServiceImpl.java
     │   │   │       └── AllocationPreviewServiceImpl.java
     │   │   │
-    │   │   ├── domain/                        # the model — no Spring, no JSON annotations
+    │   │   ├── domain/                        # le modèle — sans Spring, sans annotation JSON
     │   │   │   ├── entity/  Order · OrderLine · OrderAllocation · OrderAllocationLine · OrderStatusHistory
     │   │   │   ├── vo/      Money · GeoPoint · DeliveryAddress
     │   │   │   └── enums/   OrderStatus
     │   │   │
-    │   │   ├── allocation/                    # THE business core — pure, framework-free
+    │   │   ├── allocation/                    # LE cœur métier — pur, sans framework
     │   │   │   ├── WarehouseAllocationStrategy.java
     │   │   │   ├── AbstractAllocationStrategy.java
     │   │   │   ├── AllocationStrategyResolver.java
@@ -126,11 +134,11 @@ order-service/
     │   │   │   │          SegmentLine · RequestedLine · WarehouseCandidate
     │   │   │   └── distance/ DistanceCalculator · HaversineDistanceCalculator
     │   │   │
-    │   │   ├── repository/                    # Spring Data JPA interfaces + specifications
+    │   │   ├── repository/                    # interfaces Spring Data JPA + spécifications
     │   │   │   ├── OrderRepository.java
     │   │   │   └── spec/OrderSpecifications.java
     │   │   │
-    │   │   ├── client/                        # anti-corruption layer (ports + adapters)
+    │   │   ├── client/                        # couche anticorruption (ports + adaptateurs)
     │   │   │   ├── CatalogClient.java · InventoryClient.java
     │   │   │   ├── impl/ CatalogRestClient.java · InventoryRestClient.java
     │   │   │   └── dto/  ProductSnapshot · AvailabilityView · ReservationCommand · ReservationHandle
@@ -140,9 +148,9 @@ order-service/
     │   │   │   │             CancelOrderRequest · AllocationPreviewRequest
     │   │   │   ├── response/ OrderResponse · OrderSummaryResponse · OrderLineResponse
     │   │   │   │             OrderAllocationResponse · AllocationPreviewResponse · PagedResponse
-    │   │   │   └── command/  CreateOrderCommand            # controller → service, no HTTP types
+    │   │   │   └── command/  CreateOrderCommand            # contrôleur → service, aucun type HTTP
     │   │   │
-    │   │   ├── mapper/                        # MapStruct, entity <-> DTO, both directions
+    │   │   ├── mapper/                        # MapStruct, entité <-> DTO, dans les deux sens
     │   │   │   ├── OrderMapper.java
     │   │   │   └── AllocationMapper.java
     │   │   │
@@ -156,74 +164,73 @@ order-service/
     │   │   │
     │   │   └── security/
     │   │       ├── JwtAuthenticationConverter.java       # claims → GrantedAuthority
-    │   │       ├── ServiceTokenProvider.java             # client-credentials token, cached
-    │   │       └── UserContext.java                      # id + roles extracted from the token
+    │   │       ├── ServiceTokenProvider.java             # jeton client-credentials, mis en cache
+    │   │       └── UserContext.java                      # id + rôles extraits du jeton
     │   │
     │   └── resources/
-    │       ├── application.yml                # ${ENV_VAR} placeholders only
+    │       ├── application.yml                # uniquement des substituants ${ENV_VAR}
     │       ├── application-docker.yml
-    │       ├── db/migration/                  # Flyway: V1__init.sql, V2__...
+    │       ├── db/migration/                  # Flyway : V1__init.sql, V2__...
     │       └── logback-spring.xml
     │
     └── test/java/com/logistics/order/
-        ├── allocation/                        # pure unit tests — the heart of the test suite
+        ├── allocation/                        # tests unitaires purs — le cœur de la suite de tests
         │   ├── NearestWarehouseAllocationStrategyTest.java
         │   ├── StockBalancingAllocationStrategyTest.java
         │   ├── AllocationStrategyResolverTest.java
         │   └── HaversineDistanceCalculatorTest.java
-        ├── service/OrderServiceImplTest.java   # Mockito on the ports
+        ├── service/OrderServiceImplTest.java   # Mockito sur les ports
         ├── controller/OrderControllerTest.java # @WebMvcTest + MockMvc
         └── integration/OrderCreationIT.java    # @SpringBootTest + Testcontainers (PostgreSQL + WireMock)
 ```
 
-### The layering rule, in one line per layer
+### La règle de couches, en une ligne par couche
 
-| Layer | Allowed to depend on | Must never |
+| Couche | Peut dépendre de | Ne doit jamais |
 |---|---|---|
-| `controller` | `service`, `dto`, `mapper` | Touch a repository, or return an entity |
-| `service` | `domain`, `repository`, `client`, `allocation` | Know about `HttpServletRequest` or `ResponseEntity` |
-| `allocation` | `allocation.model` only | Import Spring, JPA or any I/O type |
-| `domain` | itself | Import a DTO or a framework annotation other than JPA |
-| `repository` | `domain` | Contain business rules |
-| `client` | `client.dto`, `domain` | Leak a foreign DTO beyond its own package |
+| `controller` | `service`, `dto`, `mapper` | Toucher un repository, ni renvoyer une entité |
+| `service` | `domain`, `repository`, `client`, `allocation` | Connaître `HttpServletRequest` ou `ResponseEntity` |
+| `allocation` | `allocation.model` uniquement | Importer Spring, JPA ou le moindre type d'E/S |
+| `domain` | lui-même | Importer un DTO ou une annotation de framework autre que JPA |
+| `repository` | `domain` | Contenir des règles métier |
+| `client` | `client.dto`, `domain` | Laisser fuir un DTO étranger hors de son propre paquet |
 
-This is checked, not just documented: an **ArchUnit** test asserts that `..controller..` never reaches
-`..repository..` and that `..allocation..` imports nothing from `org.springframework`. That test is itself an
-interview talking point.
+Ceci est vérifié, pas seulement documenté : un test **ArchUnit** affirme que `..controller..` n'atteint
+jamais `..repository..` et que `..allocation..` n'importe rien de `org.springframework`. Ce test est
+lui-même un sujet de discussion en entretien.
 
-## 5. Other backend modules
+## 5. Les autres modules backend
 
-`api-gateway` is thinner — no domain, no database:
-
+`api-gateway` est plus mince — aucun domaine, aucune base de données :
 ```
 api-gateway/src/main/java/com/logistics/gateway/
 ├── GatewayApplication.java
 ├── config/  SecurityConfig · RouteConfig · CorsConfig
 ├── filter/  JwtAuthenticationFilter · CorrelationIdFilter · RequestLoggingFilter
-└── exception/ GatewayExceptionHandler        # RFC 7807 even for edge errors
+└── exception/ GatewayExceptionHandler        # RFC 7807 même pour les erreurs de périphérie
 ```
 
-`catalog-service` follows the same layering, with `repository` holding Spring Data **MongoDB** interfaces and
-`domain/document/` instead of `domain/entity/` — the naming makes the persistence model visible at a glance.
-It has no `allocation` package and no Flyway; index creation lives in a `MongoIndexInitializer`.
+`catalog-service` suit le même découpage en couches, avec un `repository` qui contient des interfaces Spring
+Data **MongoDB** et un `domain/document/` au lieu d'un `domain/entity/` — le nommage rend le modèle de
+persistance visible d'un coup d'œil. Il n'a ni paquet `allocation` ni Flyway ; la création des index vit dans
+un `MongoIndexInitializer`.
 
-## 6. Frontend structure
-
+## 6. Structure du frontend
 ```
 frontend/
 ├── package.json · angular.json · tsconfig.json · Dockerfile · nginx.conf
-├── .env.example                      # API_BASE_URL injected at container start
+├── .env.example                      # API_BASE_URL injectée au démarrage du conteneur
 └── src/app/
-    ├── core/                         # singletons, imported once
+    ├── core/                         # singletons, importés une seule fois
     │   ├── auth/       auth.service.ts · auth.guard.ts · role.guard.ts · token.store.ts
     │   ├── http/       auth.interceptor.ts · error.interceptor.ts · correlation.interceptor.ts
     │   ├── models/     user.model.ts · product.model.ts · order.model.ts · warehouse.model.ts
     │   └── services/   catalog.api.ts · inventory.api.ts · order.api.ts
-    ├── shared/                       # reusable, stateless
+    ├── shared/                       # réutilisables, sans état
     │   ├── components/ data-table · status-badge · money · confirm-dialog · problem-alert
     │   ├── pipes/      currency-format.pipe.ts · distance.pipe.ts
     │   └── directives/ has-role.directive.ts
-    ├── features/                     # one lazy-loaded route per feature
+    ├── features/                     # une route chargée paresseusement par fonctionnalité
     │   ├── auth/       login · register
     │   ├── catalog/    product-list · product-detail · product-form
     │   ├── inventory/  warehouse-list · warehouse-form · stock-board · movement-history
@@ -233,23 +240,23 @@ frontend/
     └── app.routes.ts · app.config.ts
 ```
 
-Angular conventions applied: **standalone components** (no `NgModule`), **signals** for local state,
-lazy-loaded routes with `loadComponent`, a typed `HttpClient` layer isolated in `core/services`, and
-`ChangeDetectionStrategy.OnPush` everywhere. The exact Angular version is read from `ng version` at Phase 1
-and pinned in `package.json` — not guessed here.
+Conventions Angular appliquées : **composants standalone** (aucun `NgModule`), **signals** pour l'état local,
+routes chargées paresseusement avec `loadComponent`, une couche `HttpClient` typée isolée dans
+`core/services`, et `ChangeDetectionStrategy.OnPush` partout. La version exacte d'Angular est relevée avec
+`ng version` en Phase 1 et figée dans `package.json` — elle n'est pas devinée ici.
 
-Two screens carry the project's message and deserve care:
+Deux écrans portent le message du projet et méritent du soin :
 
-- **`orders/allocation-map`** — the order detail showing each shipment, its warehouse, and the distance used
-  by the decision.
-- **`admin/allocation-simulator`** — calls `POST /orders/allocation-preview` with both strategies and shows
-  the two plans side by side. This is the screen to demo in an interview.
+- **`orders/allocation-map`** — le détail d'une commande, montrant chaque expédition, son entrepôt et la
+  distance qui a motivé la décision.
+- **`admin/allocation-simulator`** — appelle `POST /orders/allocation-preview` avec les deux stratégies et
+  affiche les deux plans côte à côte. C'est l'écran à démontrer en entretien.
 
-## 7. Git conventions
+## 7. Conventions Git
 
-**Branches** — `main` (always runnable), `develop`, `feature/<service>-<subject>`, `fix/<subject>`.
+**Branches** — `main` (toujours exécutable), `develop`, `feature/<service>-<sujet>`, `fix/<sujet>`.
 
-**Commits — Conventional Commits, in English:**
+**Commits — Conventional Commits, en anglais :**
 
 ```
 feat(order): add warehouse allocation strategy resolver
@@ -259,19 +266,23 @@ test(order): cover split allocation across three warehouses
 chore(docker): pin postgres image version
 ```
 
-Scope is the module name. One commit per coherent change — a reviewer (or an interviewer) reading
-`git log --oneline` should see the project being built, not fifteen commits named "update".
+La portée est le nom du module. Un commit par changement cohérent — un relecteur (ou un examinateur) qui lit
+`git log --oneline` doit voir le projet se construire, et non quinze commits intitulés « update ».
 
-**Phase tags**: `v0.1-phase0-design`, `v0.2-auth`, `v0.3-catalog`, … so each milestone stays checkoutable.
+> Les messages de commit restent en anglais : c'est la convention Conventional Commits, et elle est
+> volontairement conservée telle quelle (voir la section « Conventions » du README racine).
 
-## 8. Build and run
+**Étiquettes de phase** : `v0.1-phase0-design`, `v0.2-auth`, `v0.3-catalog`, … afin que chaque jalon reste
+récupérable par `checkout`.
 
-| Command | Effect |
+## 8. Construction et exécution
+
+| Commande | Effet |
 |---|---|
-| `mvn -q verify` | Compiles the five services, runs unit + integration tests (Testcontainers) |
-| `docker compose up --build` | Databases, five services, frontend; the gateway is the only backend port published |
-| `docker compose down -v` | Full teardown including volumes |
-| `scripts/seed.sh` | Loads a demo dataset: categories, products, four warehouses, initial stock (added with `inventory-service`, phase 3) |
+| `mvn -q verify` | Compile les cinq services, exécute les tests unitaires et d'intégration (Testcontainers) |
+| `docker compose up --build` | Bases de données, cinq services, frontend ; la gateway est le seul port backend publié |
+| `docker compose down -v` | Arrêt complet, volumes compris |
+| `scripts/seed.sh` | Charge un jeu de données de démonstration : catégories, produits, quatre entrepôts, stock initial (ajouté avec `inventory-service`, phase 3) |
 
-The seed script inserts data **through the public API**, not with raw SQL — so it doubles as an
-end-to-end smoke test of the contract.
+Le script de seed insère les données **à travers l'API publique**, et non par du SQL brut — il fait donc
+aussi office de test de bout en bout du contrat.

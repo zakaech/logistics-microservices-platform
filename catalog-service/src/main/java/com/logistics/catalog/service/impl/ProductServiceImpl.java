@@ -88,7 +88,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponse create(CreateProductRequest request) {
         if (productRepository.existsBySku(request.sku())) {
-            throw new DuplicateResourceException("Product", "sku", request.sku());
+            throw new DuplicateResourceException("Produit", "sku", request.sku());
         }
 
         Category category = categoryService.requireById(request.categoryId());
@@ -153,6 +153,6 @@ public class ProductServiceImpl implements ProductService {
 
     private Product requireById(String id) {
         return productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", id));
+                .orElseThrow(() -> new ResourceNotFoundException("Produit", id));
     }
 }

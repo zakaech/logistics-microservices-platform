@@ -98,8 +98,8 @@ public class OrderStateWriter {
         }
 
         order.transitionTo(OrderStatus.ALLOCATED,
-                "Allocated by '" + plan.strategyName() + "' across "
-                        + plan.shipmentCount() + " shipment(s)", actor, now);
+                "Affectée par '" + plan.strategyName() + "' sur "
+                        + plan.shipmentCount() + " expédition(s)", actor, now);
 
         return orderRepository.save(order);
     }
@@ -149,6 +149,6 @@ public class OrderStateWriter {
 
     private Order require(UUID orderId) {
         return orderRepository.findByIdWithDetails(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", orderId));
+                .orElseThrow(() -> new ResourceNotFoundException("Commande", orderId));
     }
 }

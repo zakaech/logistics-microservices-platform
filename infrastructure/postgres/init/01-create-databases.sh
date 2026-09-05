@@ -1,13 +1,14 @@
 #!/bin/sh
 #
-# Creates one database and one dedicated user per service.
+# Crée une base et un utilisateur dédié par service.
 #
-# This runs ONLY on the first initialisation of the postgres data volume.
-# All three databases are created now, even though Phase 1 uses auth_db alone,
-# so that a later phase does not require destroying the volume.
+# Ce script ne s'exécute qu'à la PREMIÈRE initialisation du volume de données
+# postgres. Les trois bases sont créées dès maintenant, même si la Phase 1
+# n'utilise qu'auth_db, afin qu'une phase ultérieure n'oblige pas à détruire
+# le volume.
 #
-# Credentials come from the environment (docker-compose reads them from .env);
-# nothing is hard-coded here.
+# Les identifiants proviennent de l'environnement (docker-compose les lit depuis
+# .env) ; rien n'est codé en dur ici.
 set -e
 
 create_database() {

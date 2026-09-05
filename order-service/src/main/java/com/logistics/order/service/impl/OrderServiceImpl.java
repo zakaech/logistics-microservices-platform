@@ -126,7 +126,7 @@ public class OrderServiceImpl implements OrderService {
             } catch (AllocationFailedException e) {
                 // The network genuinely cannot serve this. Record why, then tell the caller.
                 stateWriter.markRejected(order.getId(),
-                        "No combination of warehouses can fulfil this order", actor);
+                        "Aucune combinaison d'entrepôts ne peut satisfaire cette commande", actor);
                 throw e;
             }
 
@@ -140,7 +140,7 @@ public class OrderServiceImpl implements OrderService {
                 // last attempt.
                 if (attempt == attempts) {
                     stateWriter.markRejected(order.getId(),
-                            "Stock was taken by another order while this one was being placed", actor);
+                            "Le stock a été pris par une autre commande pendant la validation de celle-ci", actor);
                     throw e;
                 }
                 log.info("Reservation for {} lost a race, re-planning (attempt {}/{})",
@@ -169,7 +169,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         stateWriter.transition(order.getId(), OrderStatus.CONFIRMED,
-                "Stock confirmed and dispatched to the warehouses", actor);
+                "Stock confirmé et transmis aux entrepôts", actor);
         log.info("Order {} confirmed", order.getOrderNumber());
         return stateWriter.responseFor(order.getId());
     }
@@ -192,7 +192,7 @@ public class OrderServiceImpl implements OrderService {
                     compensationFailure);
         }
         stateWriter.markCancelledQuietly(allocated.order().getId(),
-                "Stock could not be confirmed", actor);
+                "Le stock n'a pas pu être confirmé", actor);
     }
 
     // --- reads --------------------------------------------------------------
@@ -227,7 +227,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public List<OrderStatusHistoryResponse> findHistory(UUID id, UUID callerId, boolean privileged) {
         Order order = orderRepository.findByIdWithHistory(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", id));
+                .orElseThrow(() -> new ResourceNotFoundException("Commande", id));
         assertVisible(order, callerId, privileged);
         return orderMapper.toHistory(order);
     }
@@ -239,7 +239,7 @@ public class OrderServiceImpl implements OrderService {
                                 boolean privileged, String actor) {
         Order order = requireVisible(id, callerId, privileged);
         String reason = (request == null || request.reason() == null || request.reason().isBlank())
-                ? "Cancelled on request"
+                ? "Annulée à la demande"
                 : request.reason();
 
         // Releasing the hold BEFORE recording the cancellation. If the release fails, the order
@@ -361,7 +361,7 @@ public class OrderServiceImpl implements OrderService {
 
     private Order requireVisible(UUID id, UUID callerId, boolean privileged) {
         Order order = orderRepository.findByIdWithDetails(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", id));
+                .orElseThrow(() -> new ResourceNotFoundException("Commande", id));
         assertVisible(order, callerId, privileged);
         return order;
     }

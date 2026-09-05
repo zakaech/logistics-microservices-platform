@@ -51,8 +51,9 @@ public class SingleShipmentAllocationStrategy extends AbstractAllocationStrategy
 
     @Override
     public String description() {
-        return "Prefers a single warehouse able to ship the whole order; otherwise uses as few "
-                + "warehouses as possible. Minimises shipments, not distance.";
+        return "Privilégie un entrepôt unique capable d'expédier toute la commande ; sinon, "
+                + "utilise le moins d'entrepôts possible. Minimise le nombre d'expéditions, "
+                + "pas la distance.";
     }
 
     @Override

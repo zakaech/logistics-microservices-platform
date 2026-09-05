@@ -14,7 +14,7 @@ public class AllocationFailedException extends RuntimeException {
     private final transient List<UnsatisfiedLine> unsatisfied;
 
     public AllocationFailedException(List<UnsatisfiedLine> unsatisfied) {
-        super("No combination of warehouses can fulfil this order.");
+        super("Aucune combinaison d'entrepôts ne peut satisfaire cette commande.");
         this.unsatisfied = List.copyOf(unsatisfied);
     }
 

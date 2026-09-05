@@ -55,14 +55,14 @@ public class WarehouseServiceImpl implements WarehouseService {
     @Transactional(readOnly = true)
     public Warehouse requireById(UUID id) {
         return warehouseRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Warehouse", id));
+                .orElseThrow(() -> new ResourceNotFoundException("Entrepôt", id));
     }
 
     @Override
     @Transactional
     public WarehouseResponse create(CreateWarehouseRequest request) {
         if (warehouseRepository.existsByCode(request.code())) {
-            throw new DuplicateResourceException("Warehouse", "code", request.code());
+            throw new DuplicateResourceException("Entrepôt", "code", request.code());
         }
 
         Warehouse warehouse = Warehouse.builder()

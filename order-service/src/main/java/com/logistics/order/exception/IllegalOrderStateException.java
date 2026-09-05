@@ -17,8 +17,11 @@ public class IllegalOrderStateException extends RuntimeException {
     private final transient Set<OrderStatus> allowedTargets;
 
     public IllegalOrderStateException(String orderNumber, OrderStatus current, OrderStatus attempted) {
-        super("Order '" + orderNumber + "' is " + current + " and cannot move to " + attempted
-                + ". Allowed: " + current.allowedTargets() + ".");
+        // Le message emploie les libellés ; les valeurs techniques restent exposées telles
+        // quelles dans currentStatus et allowedTargets, que le front-end lit pour son affichage.
+        super("La commande '" + orderNumber + "' est " + current.label()
+                + " et ne peut pas passer à " + attempted.label() + ". Transitions autorisées : "
+                + current.allowedTargets().stream().map(OrderStatus::label).toList() + ".");
         this.currentStatus = current;
         this.allowedTargets = current.allowedTargets();
     }

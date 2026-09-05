@@ -40,7 +40,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/warehouses")
 @RequiredArgsConstructor
-@Tag(name = "Warehouses", description = "Warehouse registry and per-warehouse stock")
+@Tag(name = "Warehouses", description = "Référentiel des entrepôts et stock par entrepôt")
 public class WarehouseController {
 
     private static final int MAX_PAGE_SIZE = 100;
@@ -49,7 +49,7 @@ public class WarehouseController {
     private final StockService stockService;
 
     @GetMapping
-    @Operation(summary = "List warehouses")
+    @Operation(summary = "Lister les entrepôts")
     public PagedResponse<WarehouseResponse> list(
             @RequestParam(required = false) Boolean active,
             @RequestParam(defaultValue = "0") int page,
@@ -58,14 +58,14 @@ public class WarehouseController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Fetch one warehouse")
+    @Operation(summary = "Consulter un entrepôt")
     public WarehouseResponse getById(@PathVariable UUID id) {
         return warehouseService.findById(id);
     }
 
     @GetMapping("/{id}/stock")
     @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER', 'ADMIN')")
-    @Operation(summary = "Stock held by one warehouse, optionally only the low-stock lines")
+    @Operation(summary = "Stock d'un entrepôt, éventuellement limité aux lignes en stock faible")
     public PagedResponse<StockItemResponse> stock(
             @PathVariable UUID id,
             @RequestParam(defaultValue = "false") boolean lowStock,
@@ -76,7 +76,7 @@ public class WarehouseController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Register a warehouse")
+    @Operation(summary = "Enregistrer un entrepôt")
     public ResponseEntity<WarehouseResponse> create(
             @Valid @RequestBody CreateWarehouseRequest request) {
         WarehouseResponse created = warehouseService.create(request);
@@ -88,7 +88,7 @@ public class WarehouseController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Replace a warehouse")
+    @Operation(summary = "Remplacer un entrepôt")
     public WarehouseResponse update(@PathVariable UUID id,
                                     @Valid @RequestBody UpdateWarehouseRequest request) {
         return warehouseService.update(id, request);
@@ -96,7 +96,7 @@ public class WarehouseController {
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Activate or deactivate; an inactive site is excluded from allocation")
+    @Operation(summary = "Activer ou désactiver ; un site inactif est exclu de l'affectation")
     public WarehouseResponse changeStatus(@PathVariable UUID id,
                                           @Valid @RequestBody UpdateWarehouseStatusRequest request) {
         return warehouseService.changeStatus(id, request.active());

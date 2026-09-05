@@ -8,16 +8,16 @@ import jakarta.validation.constraints.Size;
 
 public record AttributeDefinitionDto(
 
-        @NotBlank(message = "key is required")
+        @NotBlank(message = "key est obligatoire")
         @Pattern(regexp = "^[a-zA-Z][a-zA-Z0-9_]{0,39}$",
-                message = "key must be alphanumeric, start with a letter, max 40 characters")
+                message = "key doit être alphanumérique, commencer par une lettre, 40 caractères au maximum")
         String key,
 
-        @NotBlank(message = "label is required")
-        @Size(max = 80, message = "label must not exceed 80 characters")
+        @NotBlank(message = "label est obligatoire")
+        @Size(max = 80, message = "label ne doit pas dépasser 80 caractères")
         String label,
 
-        @NotNull(message = "type is required")
+        @NotNull(message = "type est obligatoire")
         AttributeType type,
 
         boolean required) {

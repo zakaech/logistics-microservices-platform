@@ -20,19 +20,19 @@ import java.util.UUID;
  */
 public record CreateStockMovementRequest(
 
-        @NotNull(message = "warehouseId is required")
+        @NotNull(message = "warehouseId est obligatoire")
         UUID warehouseId,
 
-        @NotBlank(message = "productId is required")
+        @NotBlank(message = "productId est obligatoire")
         String productId,
 
-        @NotNull(message = "type is required")
+        @NotNull(message = "type est obligatoire")
         MovementType type,
 
-        @NotNull(message = "quantity is required")
-        @Min(value = 1, message = "quantity must be at least 1")
+        @NotNull(message = "quantity est obligatoire")
+        @Min(value = 1, message = "quantity doit valoir au moins 1")
         Integer quantity,
 
-        @Size(max = 64, message = "reference must not exceed 64 characters")
+        @Size(max = 64, message = "reference ne doit pas dépasser 64 caractères")
         String reference) {
 }

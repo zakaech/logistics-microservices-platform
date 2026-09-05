@@ -1,8 +1,11 @@
 import {
   ApplicationConfig,
+  LOCALE_ID,
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
+import { registerLocaleData } from '@angular/common';
+import localeFr from '@angular/common/locales/fr';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 
@@ -10,8 +13,15 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/http/auth.interceptor';
 import { errorInterceptor } from './core/http/error.interceptor';
 
+// Sans cet enregistrement, les pipes date, currency et number formatent en en-US :
+// « 9/5/26, 12:03 AM » et « €349.90 ». Le code devise continue de venir de l'API ;
+// seule la mise en forme change.
+registerLocaleData(localeFr);
+
 export const appConfig: ApplicationConfig = {
   providers: [
+    { provide: LOCALE_ID, useValue: 'fr-FR' },
+
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
 

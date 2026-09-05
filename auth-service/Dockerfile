@@ -1,13 +1,14 @@
 # ---------------------------------------------------------------------------
-# Build context is the REPOSITORY ROOT, not this directory: the module needs the
-# parent pom, and Maven needs every module pom to build the reactor.
+# Le contexte de build est la RACINE DU DÉPÔT, pas ce répertoire : le module a besoin
+# du pom parent, et Maven a besoin de tous les poms de modules pour bâtir le réacteur.
 #   docker build -f auth-service/Dockerfile .
 # ---------------------------------------------------------------------------
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /workspace
 
-# Copy only the poms first: this layer is rebuilt only when a dependency
-# changes, so day-to-day source edits do not re-download the world.
+# Copier d'abord les seuls poms : cette couche n'est reconstruite que lorsqu'une
+# dépendance change, si bien que les modifications de source du quotidien ne
+# retéléchargent pas la terre entière.
 COPY pom.xml ./
 COPY auth-service/pom.xml auth-service/pom.xml
 COPY catalog-service/pom.xml catalog-service/pom.xml
@@ -22,7 +23,7 @@ RUN mvn -B -q -pl auth-service -am clean package -DskipTests
 # ---------------------------------------------------------------------------
 FROM eclipse-temurin:17-jre-alpine AS runtime
 
-# Never run as root: a container escape should not start from uid 0.
+# Ne jamais s'exécuter en root : une évasion de conteneur ne doit pas partir de l'uid 0.
 RUN addgroup -S app && adduser -S -G app app
 WORKDIR /app
 
@@ -32,7 +33,7 @@ USER app
 
 EXPOSE 8081
 
-# Respect the container's memory limit instead of assuming the host's RAM.
+# Respecter la limite mémoire du conteneur plutôt que de présumer la RAM de l'hôte.
 ENV JAVA_OPTS="-XX:MaxRAMPercentage=75 -XX:+UseContainerSupport"
 
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]

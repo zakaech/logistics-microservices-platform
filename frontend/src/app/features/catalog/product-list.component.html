@@ -1,87 +1,149 @@
-<section class="catalog">
-  <header class="catalog__head">
-    <h1>Catalogue</h1>
+<div class="page-head">
+  <div>
+    <h2 class="page-head__title">Catalogue</h2>
+    <p class="page-head__subtitle">
+      @if (products.data(); as result) {
+        {{ result.totalElements }} référence(s) disponibles
+      } @else {
+        Consultation et sélection des références
+      }
+    </p>
+  </div>
+  <div class="page-head__actions">
     @if (cart.count() > 0) {
-      <a class="catalog__cart" routerLink="/orders/new">
-        Basket · {{ cart.count() }}
+      <a class="btn btn--primary btn--sm" routerLink="/orders/new">
+        <app-icon name="cart" [size]="16" />
+        Panier · {{ cart.count() }}
       </a>
     }
-  </header>
+  </div>
+</div>
 
-  <form class="filters" (ngSubmit)="search()">
+<!-- Filtres. La recherche part au serveur : l'index texte MongoDB fait un travail
+     qu'aucun filtrage côté navigateur ne reproduit. -->
+<form class="filters card" (ngSubmit)="search()">
+  <div class="filters__search">
+    <span class="filters__icon" aria-hidden="true"><app-icon name="search" [size]="16" /></span>
     <input
+      class="input"
       type="search"
       name="q"
-      placeholder="Search by name, brand or description"
+      placeholder="Rechercher par nom, marque ou description…"
       [(ngModel)]="searchTerm"
-      aria-label="Search products"
+      aria-label="Rechercher un produit"
     />
+  </div>
 
-    <select name="category" [(ngModel)]="selectedCategoryId" (change)="search()"
-            aria-label="Filter by category">
-      <option value="">All categories</option>
-      @for (category of flatCategories(); track category.id) {
-        <option [value]="category.id">{{ category.label }}</option>
-      }
-    </select>
+  <select
+    class="select filters__category"
+    name="category"
+    [(ngModel)]="selectedCategoryId"
+    (change)="search()"
+    aria-label="Filtrer par catégorie"
+  >
+    <option value="">Toutes les catégories</option>
+    @for (category of flatCategories(); track category.id) {
+      <option [value]="category.id">{{ category.label }}</option>
+    }
+  </select>
 
-    <button type="submit">Search</button>
-    <button type="button" class="ghost" (click)="clearFilters()">Reset</button>
-  </form>
+  <button type="submit" class="btn btn--primary">Rechercher</button>
+  <button type="button" class="btn btn--secondary" (click)="clearFilters()">Réinitialiser</button>
+</form>
 
-  <app-loading-bar [loading]="products.loading()" label="Loading products…" />
-  <app-problem-alert [problem]="products.error()" />
+<app-problem-alert [problem]="products.error()" />
 
-  @if (products.data(); as result) {
-    @if (result.content.length === 0) {
-      <p class="empty">
-        No product matches these filters.
-        @if (searchTerm || selectedCategoryId) {
-          <button type="button" class="link" (click)="clearFilters()">Clear them</button>
-        }
+<!-- Chargement : des cartes fantômes à la place du contenu, pour que la grille ne
+     saute pas au moment où les données arrivent. -->
+@if (products.loading()) {
+  <ul class="grid" aria-hidden="true">
+    @for (slot of skeletons; track slot) {
+      <li class="card product product--ghost">
+        <span class="skeleton product__ghost-image"></span>
+        <span class="skeleton product__ghost-line"></span>
+        <span class="skeleton product__ghost-line product__ghost-line--short"></span>
+      </li>
+    }
+  </ul>
+  <p class="sr-only" role="status">Chargement des produits…</p>
+} @else if (products.data(); as result) {
+  @if (result.content.length === 0) {
+    <div class="card empty-state">
+      <app-icon name="search" [size]="28" />
+      <p class="empty-state__title">Aucun produit trouvé</p>
+      <p class="empty-state__hint">
+        Essayez de modifier vos critères de recherche ou de choisir une autre catégorie.
       </p>
-    } @else {
-      <p class="count">{{ result.totalElements }} product(s)</p>
-
-      <ul class="grid">
-        @for (product of result.content; track product.id) {
-          <li class="card">
-            @if (product.primaryImage) {
-              <img class="card__image" [src]="product.primaryImage" [alt]="product.name" />
-            } @else {
-              <div class="card__image card__image--empty" aria-hidden="true"></div>
-            }
-
-            <div class="card__body">
-              <h2 class="card__name">{{ product.name }}</h2>
-              <p class="card__meta">
-                <span class="card__sku">{{ product.sku }}</span>
-                @if (product.brand) { · {{ product.brand }} }
-              </p>
-              <p class="card__path">{{ product.categoryPath }}</p>
-              <p class="card__price">
-                {{ product.price.amount | currency: product.price.currency }}
-              </p>
-            </div>
-
-            <button type="button" class="card__add" (click)="addToCart(product)">
-              @if (justAdded() === product.id) { Added } @else { Add to basket }
-            </button>
-          </li>
-        }
-      </ul>
-
-      @if (result.totalPages > 1) {
-        <nav class="pager" aria-label="Pagination">
-          <button type="button" [disabled]="result.first" (click)="goToPage(page() - 1)">
-            Previous
-          </button>
-          <span>Page {{ result.page + 1 }} of {{ result.totalPages }}</span>
-          <button type="button" [disabled]="result.last" (click)="goToPage(page() + 1)">
-            Next
-          </button>
-        </nav>
+      @if (searchTerm || selectedCategoryId) {
+        <button type="button" class="btn btn--secondary btn--sm" (click)="clearFilters()">
+          Réinitialiser les filtres
+        </button>
       }
+    </div>
+  } @else {
+    <ul class="grid">
+      @for (product of result.content; track product.id) {
+        <li class="card product">
+          <div class="product__visual">
+            @if (product.primaryImage) {
+              <img [src]="product.primaryImage" [alt]="product.name" loading="lazy" />
+            } @else {
+              <span class="product__placeholder" aria-hidden="true">
+                <app-icon name="package" [size]="28" />
+              </span>
+            }
+          </div>
+
+          <div class="product__body">
+            <p class="product__category">{{ categoryLabel(product.categoryPath) }}</p>
+            <h3 class="product__name">{{ product.name }}</h3>
+            <p class="product__meta">
+              <span class="sku">{{ product.sku }}</span>
+              @if (product.brand) {
+                <span class="product__brand">{{ product.brand }}</span>
+              }
+            </p>
+            <p class="product__price">
+              {{ product.price.amount | currency: product.price.currency }}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            class="product__add"
+            [class.product__add--done]="justAdded() === product.id"
+            (click)="addToCart(product)"
+          >
+            @if (justAdded() === product.id) {
+              <app-icon name="check" [size]="16" />Ajouté
+            } @else {
+              <app-icon name="cart" [size]="16" />Ajouter au panier
+            }
+          </button>
+        </li>
+      }
+    </ul>
+
+    @if (result.totalPages > 1) {
+      <nav class="pager" aria-label="Pagination">
+        <button
+          type="button"
+          class="btn btn--secondary btn--sm"
+          [disabled]="result.first"
+          (click)="goToPage(page() - 1)"
+        >
+          Précédent
+        </button>
+        <span>Page {{ result.page + 1 }} sur {{ result.totalPages }}</span>
+        <button
+          type="button"
+          class="btn btn--secondary btn--sm"
+          [disabled]="result.last"
+          (click)="goToPage(page() + 1)"
+        >
+          Suivant
+        </button>
+      </nav>
     }
   }
-</section>
+}

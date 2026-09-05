@@ -13,18 +13,37 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
     }
   `,
   styles: `
-    .loading { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0; }
+    .loading {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      padding: var(--sp-2) 0;
+    }
     .loading__bar {
-      width: 1rem; height: 1rem; border-radius: 50%;
-      border: 2px solid #c8d2dd; border-top-color: #2c5f8a;
+      width: 1rem;
+      height: 1rem;
+      border-radius: 50%;
+      border: 2px solid var(--c-border-strong);
+      border-top-color: var(--c-primary);
       animation: spin 0.7s linear infinite;
     }
-    .loading__label { font-size: 0.85rem; color: #5a6672; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @media (prefers-reduced-motion: reduce) { .loading__bar { animation: none; } }
+    .loading__label {
+      font-size: var(--fs-small);
+      color: var(--c-text-muted);
+    }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .loading__bar {
+        animation: none;
+      }
+    }
   `,
 })
 export class LoadingBarComponent {
   readonly loading = input(false);
-  readonly label = input('Loading…');
+  readonly label = input('Chargement…');
 }

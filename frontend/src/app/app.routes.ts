@@ -6,6 +6,16 @@ import { ShellComponent } from './layout/shell.component';
 /**
  * The route table, and with it the access policy.
  *
+ * <p>Two layouts, and the route tree is what separates them. The authentication screens stand on
+ * their own at the top level; everything else is a child of {@link ShellComponent} and therefore
+ * renders inside the application frame - sidebar, top bar, basket. A screen belongs to one group
+ * or the other by where it sits in this tree, not by a condition evaluated inside a component.
+ *
+ * <p>That distinction matters beyond tidiness: signing in is not a place inside the application,
+ * it is the door to it. Wrapping it in the frame offered a user who is not signed in a navigation
+ * bar full of links they cannot follow, and a "Connexion" button on the page that already is the
+ * sign-in page.
+ *
  * <p>Every feature is lazy-loaded with {@code loadComponent}: the warehouse dashboard is not
  * downloaded by a customer who will never open it, and the catalogue renders without waiting for
  * code no one has asked for.
@@ -15,6 +25,15 @@ import { ShellComponent } from './layout/shell.component';
  * possibly hold yet.
  */
 export const routes: Routes = [
+  // --- Authentification : hors du cadre applicatif -------------------------
+  // Déclarée avant la route du shell, dont le chemin vide accepterait sinon cette URL.
+  {
+    path: 'login',
+    title: 'Connexion',
+    loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent),
+  },
+
+  // --- Application : tout ce qui vit dans le cadre --------------------------
   {
     path: '',
     component: ShellComponent,
@@ -22,10 +41,13 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'catalog' },
 
       {
-        path: 'login',
-        title: 'Sign in',
+        // Le point d'entrée d'un utilisateur connecté. Il n'agrège que des endpoints
+        // existants ; ce qu'il affiche dépend du rôle, comme les endpoints eux-mêmes.
+        path: 'dashboard',
+        title: 'Tableau de bord',
+        canActivate: [authGuard],
         loadComponent: () =>
-          import('./features/auth/login.component').then((m) => m.LoginComponent),
+          import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
 
       {
@@ -41,7 +63,7 @@ export const routes: Routes = [
 
       {
         path: 'orders/new',
-        title: 'Place an order',
+        title: 'Passer une commande',
         canActivate: [authGuard, roleGuard('ROLE_CLIENT', 'ROLE_ADMIN')],
         loadComponent: () =>
           import('./features/orders/order-create.component').then(
@@ -50,14 +72,14 @@ export const routes: Routes = [
       },
       {
         path: 'orders',
-        title: 'Orders',
+        title: 'Commandes',
         canActivate: [authGuard],
         loadComponent: () =>
           import('./features/orders/order-list.component').then((m) => m.OrderListComponent),
       },
       {
         path: 'orders/:id',
-        title: 'Order',
+        title: 'Commande',
         canActivate: [authGuard],
         loadComponent: () =>
           import('./features/orders/order-detail.component').then(
@@ -67,7 +89,7 @@ export const routes: Routes = [
 
       {
         path: 'inventory',
-        title: 'Warehouse stock',
+        title: 'Stock par entrepôt',
         canActivate: [authGuard, roleGuard('ROLE_WAREHOUSE_MANAGER', 'ROLE_ADMIN')],
         loadComponent: () =>
           import('./features/inventory/stock-dashboard.component').then(
@@ -77,7 +99,7 @@ export const routes: Routes = [
 
       {
         path: 'forbidden',
-        title: 'Not available',
+        title: 'Accès non autorisé',
         loadComponent: () =>
           import('./layout/forbidden.component').then((m) => m.ForbiddenComponent),
       },

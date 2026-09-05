@@ -1,138 +1,244 @@
-<section class="detail">
-  <a class="detail__back" routerLink="/orders">Back to orders</a>
+<a class="back" routerLink="/orders">
+  <app-icon name="arrow-left" [size]="16" />Retour aux commandes
+</a>
 
-  <app-loading-bar [loading]="order.loading()" label="Loading order…" />
-  <app-problem-alert [problem]="order.error()" />
+<app-loading-bar [loading]="order.loading()" label="Chargement de la commande…" />
+<app-problem-alert [problem]="order.error()" />
 
-  @if (order.data(); as o) {
-    <header class="detail__head">
-      <div>
-        <h1>{{ o.orderNumber }}</h1>
-        <p class="detail__meta">
-          Placed {{ o.createdAt | date: 'medium' }} ·
-          {{ o.totalAmount | currency: o.currency }}
-        </p>
-      </div>
-      <span class="status" [attr.data-status]="o.status">{{ o.status }}</span>
-    </header>
-
-    <!-- Why this order ships the way it does. -->
-    <section class="allocation">
-      <h2>Fulfilment</h2>
-
-      @if (o.allocations.length === 0) {
-        <p class="muted">
-          @if (o.status === 'REJECTED') {
-            No warehouse combination could serve this order, so nothing was allocated.
-          } @else {
-            Not allocated yet.
-          }
-        </p>
-      } @else {
-        <p class="allocation__why">
-          @if (o.splitShipment) {
-            Split across <strong>{{ o.allocations.length }}</strong> warehouses
-          } @else {
-            Shipped whole from <strong>{{ o.allocations[0].warehouseCode }}</strong>
-          }
-          @if (o.allocationStrategy) {
-            by the <code>{{ o.allocationStrategy }}</code> strategy.
-          }
-        </p>
-
-        @for (allocation of o.allocations; track allocation.warehouseId) {
-          <article class="shipment">
-            <header>
-              <h3>Shipment {{ allocation.shipmentSequence }}</h3>
-              <span class="shipment__warehouse">{{ allocation.warehouseCode }}</span>
-            </header>
-            <p class="shipment__reason">
-              Chosen at <strong>{{ allocation.distanceKm | number: '1.0-2' }} km</strong>
-              from the delivery address — the distance the engine used to decide.
-            </p>
-            <ul>
-              @for (line of allocation.lines; track line.productId) {
-                <li>{{ line.quantity }} × {{ productName(o, line.productId) }}</li>
-              }
-            </ul>
-          </article>
-        }
-      }
-    </section>
-
-    <section class="lines">
-      <h2>Lines</h2>
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">Product</th>
-            <th scope="col">Unit price</th>
-            <th scope="col">Qty</th>
-            <th scope="col">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (line of o.lines; track line.id) {
-            <tr>
-              <td>
-                <strong>{{ line.name }}</strong>
-                <span class="sku">{{ line.sku }}</span>
-              </td>
-              <td>{{ line.unitPrice | currency: line.currency }}</td>
-              <td>{{ line.quantity }}</td>
-              <td>{{ line.lineTotal | currency: line.currency }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-      <p class="lines__note">
-        Prices are those recorded when the order was placed, not today's catalogue prices.
+@if (order.data(); as o) {
+  <div class="page-head">
+    <div>
+      <h2 class="page-head__title order-number">{{ o.orderNumber }}</h2>
+      <p class="page-head__subtitle">
+        Passée le {{ o.createdAt | date: 'medium' }}
       </p>
-    </section>
+    </div>
+    <div class="page-head__actions">
+      <span class="badge" [attr.data-status]="o.status">{{ o.status | orderStatusLabel }}</span>
+    </div>
+  </div>
 
-    <section class="delivery">
-      <h2>Delivery address</h2>
-      <address>
-        {{ o.deliveryAddress.line1 }}<br />
-        {{ o.deliveryAddress.postalCode }} {{ o.deliveryAddress.city }},
-        {{ o.deliveryAddress.country }}
-      </address>
-    </section>
-
-    @if (history().length > 0) {
-      <section class="timeline">
-        <h2>Timeline</h2>
-        <ol>
-          @for (entry of history(); track entry.changedAt) {
-            <li>
-              <span class="timeline__when">{{ entry.changedAt | date: 'short' }}</span>
-              <span class="timeline__what">
-                @if (entry.fromStatus) { {{ entry.fromStatus }} → }{{ entry.toStatus }}
-              </span>
-              @if (entry.reason) {
-                <span class="timeline__why">{{ entry.reason }}</span>
-              }
-            </li>
-          }
-        </ol>
-      </section>
+  <!-- Bandeau de synthèse : ce qu'un opérateur veut savoir en un coup d'œil. -->
+  <section class="summary card" aria-label="Synthèse">
+    <div class="summary__item">
+      <span class="summary__label">Total</span>
+      <span class="summary__value">{{ o.totalAmount | currency: o.currency }}</span>
+    </div>
+    <div class="summary__item">
+      <span class="summary__label">Lignes</span>
+      <span class="summary__value">{{ o.lines.length }}</span>
+    </div>
+    <div class="summary__item">
+      <span class="summary__label">Expéditions</span>
+      <span class="summary__value">
+        {{ o.allocations.length }}
+        @if (o.splitShipment) {
+          <span class="badge badge--info">Fractionnée</span>
+        }
+      </span>
+    </div>
+    @if (o.allocationStrategy) {
+      <div class="summary__item summary__item--strategy">
+        <span class="summary__label">Stratégie d'affectation</span>
+        <span class="summary__value summary__value--text">
+          <app-icon name="route" [size]="16" />
+          {{ o.allocationStrategy | strategyLabel }}
+        </span>
+      </div>
     }
+  </section>
 
-    <section class="actions">
-      <app-loading-bar [loading]="acting()" label="Updating…" />
-      <app-problem-alert [problem]="actionError()" />
+  <div class="split">
+    <div class="split__main">
+      <!-- Pourquoi cette commande part de ces entrepôts : le cœur du projet. -->
+      <section class="card">
+        <header class="card__head">
+          <h3 class="card__title">Affectation aux entrepôts</h3>
+          @if (o.allocations.length > 1) {
+            <span class="badge badge--info">{{ o.allocations.length }} expéditions</span>
+          }
+        </header>
 
-      @if (canCancel(o)) {
-        <button type="button" class="danger" [disabled]="acting()" (click)="cancel()">
-          Cancel order
-        </button>
+        @if (o.allocations.length === 0) {
+          <div class="empty-state">
+            @if (o.status === 'REJECTED') {
+              <app-icon name="alert" [size]="28" />
+              <p class="empty-state__title">Aucune affectation possible</p>
+              <p class="empty-state__hint">
+                Aucune combinaison d'entrepôts ne pouvait servir cette commande : rien n'a été
+                réservé.
+              </p>
+            } @else {
+              <p class="empty-state__title">Pas encore affectée</p>
+            }
+          </div>
+        } @else {
+          <p class="why">
+            @if (o.splitShipment) {
+              Le stock disponible ne permettait pas de servir cette commande depuis un seul site :
+              elle est <strong>fractionnée sur {{ o.allocations.length }} entrepôts</strong>.
+            } @else {
+              Servie <strong>en une seule expédition</strong> depuis
+              <strong>{{ o.allocations[0].warehouseCode }}</strong>.
+            }
+          </p>
+
+          <ul class="shipments">
+            @for (allocation of o.allocations; track allocation.warehouseId) {
+              <li class="shipment">
+                <div class="shipment__head">
+                  <span class="shipment__seq" aria-hidden="true">
+                    {{ allocation.shipmentSequence }}
+                  </span>
+                  <div class="shipment__id">
+                    <h4>Expédition {{ allocation.shipmentSequence }}</h4>
+                    <p class="muted">Entrepôt {{ allocation.warehouseCode }}</p>
+                  </div>
+                  <div class="shipment__distance">
+                    <strong>{{ allocation.distanceKm | number: '1.0-2' }} km</strong>
+                    <span class="muted">de l'adresse de livraison</span>
+                  </div>
+                </div>
+
+                <ul class="shipment__lines">
+                  @for (line of allocation.lines; track line.productId) {
+                    <li>
+                      <span class="shipment__qty">{{ line.quantity }} ×</span>
+                      {{ productName(o, line.productId) }}
+                    </li>
+                  }
+                </ul>
+              </li>
+            }
+          </ul>
+
+          <p class="why why--foot">
+            La distance affichée est celle qu'a utilisée le moteur pour décider, calculée par la
+            formule de Haversine entre l'entrepôt et le point de livraison.
+          </p>
+        }
+      </section>
+
+      <section class="card">
+        <header class="card__head">
+          <h3 class="card__title">Lignes de commande</h3>
+        </header>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th scope="col">Produit</th>
+                <th scope="col" class="num">Prix unitaire</th>
+                <th scope="col" class="num">Qté</th>
+                <th scope="col" class="num">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (line of o.lines; track line.id) {
+                <tr>
+                  <td>
+                    <strong>{{ line.name }}</strong>
+                    <span class="sku block">{{ line.sku }}</span>
+                  </td>
+                  <td class="num">{{ line.unitPrice | currency: line.currency }}</td>
+                  <td class="num">{{ line.quantity }}</td>
+                  <td class="num">{{ line.lineTotal | currency: line.currency }}</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="3" class="num">Total</td>
+                <td class="num total">{{ o.totalAmount | currency: o.currency }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <p class="note">
+          Les prix affichés sont ceux enregistrés lors de la commande, pas les prix catalogue du
+          jour.
+        </p>
+      </section>
+    </div>
+
+    <div class="split__aside">
+      @if (history().length > 0) {
+        <section class="card">
+          <header class="card__head">
+            <h3 class="card__title">Suivi</h3>
+          </header>
+          <ol class="timeline">
+            @for (entry of history(); track entry.changedAt; let last = $last) {
+              <li class="timeline__step" [class.timeline__step--current]="last">
+                <span class="timeline__dot" aria-hidden="true"></span>
+                <div class="timeline__body">
+                  <span class="timeline__status">{{ entry.toStatus | orderStatusLabel }}</span>
+                  <time class="timeline__when">{{ entry.changedAt | date: 'short' }}</time>
+                  @if (entry.reason) {
+                    <span class="timeline__why">{{ entry.reason }}</span>
+                  }
+                </div>
+              </li>
+            }
+          </ol>
+        </section>
       }
-      @if (canShip(o)) {
-        <button type="button" [disabled]="acting()" (click)="ship()">Mark as shipped</button>
+
+      <section class="card">
+        <header class="card__head">
+          <h3 class="card__title">Adresse de livraison</h3>
+        </header>
+        <div class="card__body">
+          <address class="address">
+            {{ o.deliveryAddress.line1 }}<br />
+            {{ o.deliveryAddress.postalCode }} {{ o.deliveryAddress.city }}<br />
+            {{ o.deliveryAddress.country }}
+          </address>
+        </div>
+      </section>
+
+      @if (canCancel(o) || canShip(o) || canDeliver(o)) {
+        <section class="card">
+          <header class="card__head">
+            <h3 class="card__title">Actions</h3>
+          </header>
+          <div class="card__body actions">
+            <app-loading-bar [loading]="acting()" label="Mise à jour…" />
+            <app-problem-alert [problem]="actionError()" />
+
+            @if (canShip(o)) {
+              <button
+                type="button"
+                class="btn btn--primary"
+                [disabled]="acting()"
+                (click)="ship()"
+              >
+                <app-icon name="truck" [size]="16" />Marquer comme expédiée
+              </button>
+            }
+            @if (canDeliver(o)) {
+              <button
+                type="button"
+                class="btn btn--primary"
+                [disabled]="acting()"
+                (click)="deliver()"
+              >
+                <app-icon name="check" [size]="16" />Marquer comme livrée
+              </button>
+            }
+            @if (canCancel(o)) {
+              <button
+                type="button"
+                class="btn btn--danger"
+                [disabled]="acting()"
+                (click)="cancel()"
+              >
+                Annuler la commande
+              </button>
+            }
+          </div>
+        </section>
       }
-      @if (canDeliver(o)) {
-        <button type="button" [disabled]="acting()" (click)="deliver()">Mark as delivered</button>
-      }
-    </section>
-  }
-</section>
+    </div>
+  </div>
+}

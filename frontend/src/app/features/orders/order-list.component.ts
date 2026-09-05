@@ -10,7 +10,9 @@ import {
   ProblemDetail,
 } from '../../core/models';
 import { LoadingBarComponent } from '../../shared/components/loading-bar.component';
+import { IconComponent } from '../../shared/components/icon.component';
 import { ProblemAlertComponent } from '../../shared/components/problem-alert.component';
+import { OrderStatusLabelPipe } from '../../shared/pipes/label.pipe';
 import { RequestState } from '../../shared/request-state';
 
 /**
@@ -28,6 +30,8 @@ import { RequestState } from '../../shared/request-state';
     RouterLink,
     CurrencyPipe,
     DatePipe,
+    OrderStatusLabelPipe,
+    IconComponent,
     ProblemAlertComponent,
     LoadingBarComponent,
   ],

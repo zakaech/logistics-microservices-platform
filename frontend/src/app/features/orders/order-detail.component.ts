@@ -9,7 +9,9 @@ import {
 } from '../../core/models';
 import { TokenStore } from '../../core/auth/token.store';
 import { LoadingBarComponent } from '../../shared/components/loading-bar.component';
+import { IconComponent } from '../../shared/components/icon.component';
 import { ProblemAlertComponent } from '../../shared/components/problem-alert.component';
+import { OrderStatusLabelPipe, StrategyLabelPipe } from '../../shared/pipes/label.pipe';
 import { RequestState } from '../../shared/request-state';
 
 /**
@@ -31,6 +33,9 @@ import { RequestState } from '../../shared/request-state';
     CurrencyPipe,
     DatePipe,
     DecimalPipe,
+    OrderStatusLabelPipe,
+    StrategyLabelPipe,
+    IconComponent,
     ProblemAlertComponent,
     LoadingBarComponent,
   ],
@@ -97,11 +102,11 @@ export class OrderDetailComponent implements OnInit {
   }
 
   protected cancel(): void {
-    this.act(() => this.orders.cancel(this.id(), 'Cancelled from the tracking screen'));
+    this.act(() => this.orders.cancel(this.id(), "Annulée depuis l'écran de suivi"));
   }
 
   protected ship(): void {
-    this.act(() => this.orders.changeStatus(this.id(), 'SHIPPED', 'Handed to the carrier'));
+    this.act(() => this.orders.changeStatus(this.id(), 'SHIPPED', 'Remise au transporteur'));
   }
 
   protected deliver(): void {

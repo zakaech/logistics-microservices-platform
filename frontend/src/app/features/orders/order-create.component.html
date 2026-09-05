@@ -1,22 +1,39 @@
-<section class="checkout">
-  <h1>Place an order</h1>
-
-  @if (cart.isEmpty()) {
-    <p class="empty">
-      Your basket is empty. <a routerLink="/catalog">Browse the catalogue</a>.
+<div class="page-head">
+  <div>
+    <h2 class="page-head__title">Passer une commande</h2>
+    <p class="page-head__subtitle">
+      Vérifiez le panier, renseignez la livraison, puis validez.
     </p>
-  } @else {
-    <div class="checkout__grid">
-      <div class="basket">
-        <h2>Basket</h2>
-        <table>
+  </div>
+</div>
+
+@if (cart.isEmpty()) {
+  <div class="card empty-state">
+    <app-icon name="cart" [size]="28" />
+    <p class="empty-state__title">Votre panier est vide</p>
+    <p class="empty-state__hint">
+      Ajoutez des références depuis le catalogue pour composer une commande.
+    </p>
+    <a class="btn btn--primary btn--sm" routerLink="/catalog">Parcourir le catalogue</a>
+  </div>
+} @else {
+  <div class="checkout">
+    <!-- Panier -->
+    <section class="card">
+      <header class="card__head">
+        <h3 class="card__title">Panier</h3>
+        <span class="badge badge--neutral">{{ cart.count() }} article(s)</span>
+      </header>
+
+      <div class="table-wrap">
+        <table class="data-table">
           <thead>
             <tr>
-              <th scope="col">Product</th>
-              <th scope="col">Unit price</th>
-              <th scope="col">Quantity</th>
-              <th scope="col">Line total</th>
-              <th scope="col"><span class="sr-only">Remove</span></th>
+              <th scope="col">Produit</th>
+              <th scope="col" class="num">Prix unitaire</th>
+              <th scope="col" class="num">Quantité</th>
+              <th scope="col" class="num">Total ligne</th>
+              <th scope="col"><span class="sr-only">Retirer</span></th>
             </tr>
           </thead>
           <tbody>
@@ -24,100 +41,148 @@
               <tr>
                 <td>
                   <strong>{{ line.product.name }}</strong>
-                  <span class="sku">{{ line.product.sku }}</span>
+                  <span class="sku block">{{ line.product.sku }}</span>
                 </td>
-                <td>{{ line.product.price.amount | currency: line.product.price.currency }}</td>
-                <td>
+                <td class="num">
+                  {{ line.product.price.amount | currency: line.product.price.currency }}
+                </td>
+                <td class="num">
                   <input
+                    class="input qty"
                     type="number"
                     min="1"
                     max="1000"
                     [value]="line.quantity"
                     (change)="updateQuantity(line.product.id, $any($event.target).value)"
-                    [attr.aria-label]="'Quantity for ' + line.product.name"
+                    [attr.aria-label]="'Quantité pour ' + line.product.name"
                   />
                 </td>
-                <td>
+                <td class="num">
                   {{ line.product.price.amount * line.quantity
                      | currency: line.product.price.currency }}
                 </td>
-                <td>
-                  <button type="button" class="link" (click)="cart.remove(line.product.id)">
-                    Remove
+                <td class="num">
+                  <button
+                    type="button"
+                    class="btn-link"
+                    (click)="cart.remove(line.product.id)"
+                    [attr.aria-label]="'Retirer ' + line.product.name"
+                  >
+                    Retirer
                   </button>
                 </td>
               </tr>
             }
           </tbody>
         </table>
-
-        <p class="basket__total">
-          Estimated total:
-          <strong>{{ cart.estimatedTotal() | currency: cart.currency() }}</strong>
-        </p>
-        <p class="basket__note">
-          Indicative only. The amount charged is computed by the server from the catalogue price at
-          the moment the order is placed.
-        </p>
       </div>
 
-      <form class="delivery" [formGroup]="form" (ngSubmit)="placeOrder()" novalidate>
-        <h2>Delivery</h2>
+      <div class="totals">
+        <div class="totals__row">
+          <span>Articles</span>
+          <strong>{{ cart.count() }}</strong>
+        </div>
+        <div class="totals__row totals__row--grand">
+          <span>Total estimé</span>
+          <strong>{{ cart.estimatedTotal() | currency: cart.currency() }}</strong>
+        </div>
+        <p class="totals__note">
+          Montant indicatif. Le total facturé est calculé par le serveur à partir du prix catalogue
+          au moment où la commande est passée.
+        </p>
+      </div>
+    </section>
 
-        <label for="line1">Address</label>
-        <input id="line1" formControlName="line1" autocomplete="street-address" />
+    <!-- Livraison -->
+    <form class="card delivery" [formGroup]="form" (ngSubmit)="placeOrder()" novalidate>
+      <header class="card__head">
+        <h3 class="card__title">Livraison</h3>
+      </header>
 
-        <div class="row">
-          <div>
-            <label for="city">City</label>
-            <input id="city" formControlName="city" autocomplete="address-level2" />
-          </div>
-          <div>
-            <label for="postalCode">Postal code</label>
-            <input id="postalCode" formControlName="postalCode" autocomplete="postal-code" />
-          </div>
-          <div>
-            <label for="country">Country</label>
-            <input id="country" formControlName="country" maxlength="2" />
-          </div>
+      <div class="card__body form-grid">
+        <div class="field field--full">
+          <label class="field__label" for="line1">Adresse</label>
+          <input class="input" id="line1" formControlName="line1" autocomplete="street-address" />
         </div>
 
-        <div class="row">
-          <div>
-            <label for="latitude">Latitude</label>
-            <input id="latitude" type="number" step="0.000001" formControlName="latitude" />
-          </div>
-          <div>
-            <label for="longitude">Longitude</label>
-            <input id="longitude" type="number" step="0.000001" formControlName="longitude" />
-          </div>
+        <div class="field field--full">
+          <label class="field__label" for="city">Ville</label>
+          <input class="input" id="city" formControlName="city" autocomplete="address-level2" />
         </div>
-        <small class="hint">
-          Coordinates are required: the allocation engine ranks warehouses by distance to this point.
-        </small>
+
+        <div class="field">
+          <label class="field__label" for="postalCode">Code postal</label>
+          <input
+            class="input"
+            id="postalCode"
+            formControlName="postalCode"
+            autocomplete="postal-code"
+          />
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="country">Pays</label>
+          <input class="input" id="country" formControlName="country" maxlength="2" />
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="latitude">Latitude</label>
+          <input
+            class="input"
+            id="latitude"
+            type="number"
+            step="0.000001"
+            formControlName="latitude"
+          />
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="longitude">Longitude</label>
+          <input
+            class="input"
+            id="longitude"
+            type="number"
+            step="0.000001"
+            formControlName="longitude"
+          />
+        </div>
+
+        <p class="field__hint field--full">
+          Les coordonnées sont obligatoires : le moteur d'affectation classe les entrepôts par
+          distance à ce point.
+        </p>
 
         @if (strategies().length > 1) {
-          <label for="strategy">Allocation strategy</label>
-          <select id="strategy" formControlName="strategy">
-            <option value="">Server default</option>
+          <div class="field field--full strategy">
+            <label class="field__label" for="strategy">Stratégie d'affectation</label>
+            <select class="select" id="strategy" formControlName="strategy">
+              <option value="">Choix du serveur</option>
+              @for (strategy of strategies(); track strategy.name) {
+                <option [value]="strategy.name">
+                  {{ strategy.name | strategyLabel }}@if (strategy.isDefault) { (par défaut) }
+                </option>
+              }
+            </select>
             @for (strategy of strategies(); track strategy.name) {
-              <option [value]="strategy.name">
-                {{ strategy.name }}@if (strategy.isDefault) { (default) }
-              </option>
+              @if (form.controls.strategy.value === strategy.name) {
+                <p class="strategy__desc">
+                  <app-icon name="route" [size]="16" />
+                  <span>{{ strategy.description }}</span>
+                </p>
+              }
             }
-          </select>
-          @for (strategy of strategies(); track strategy.name) {
-            @if (form.controls.strategy.value === strategy.name) {
-              <small class="hint">{{ strategy.description }}</small>
-            }
-          }
+          </div>
         }
+      </div>
 
-        <app-loading-bar [loading]="submitting()" label="Allocating and reserving stock…" />
+      <div class="card__body submit">
+        <app-loading-bar [loading]="submitting()" label="Affectation et réservation du stock…" />
         <app-problem-alert [problem]="error()" />
 
-        <button type="submit" [disabled]="submitting()">Place order</button>
-      </form>
-    </div>
-  }
-</section>
+        <button type="submit" class="btn btn--primary" [disabled]="submitting()">
+          <app-icon name="check" [size]="16" />Valider la commande
+        </button>
+      </div>
+    </form>
+  </div>
+}

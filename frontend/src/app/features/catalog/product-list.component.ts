@@ -10,7 +10,7 @@ import {
   ProductSummary,
 } from '../../core/models';
 import { CartStore } from '../orders/cart.store';
-import { LoadingBarComponent } from '../../shared/components/loading-bar.component';
+import { IconComponent } from '../../shared/components/icon.component';
 import { ProblemAlertComponent } from '../../shared/components/problem-alert.component';
 import { RequestState } from '../../shared/request-state';
 
@@ -24,7 +24,7 @@ import { RequestState } from '../../shared/request-state';
 @Component({
   selector: 'app-product-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, CurrencyPipe, ProblemAlertComponent, LoadingBarComponent],
+  imports: [FormsModule, RouterLink, CurrencyPipe, ProblemAlertComponent, IconComponent],
   templateUrl: './product-list.component.html',
   styleUrl: './product-list.component.scss',
 })
@@ -42,6 +42,36 @@ export class ProductListComponent implements OnInit {
 
   /** Which product was just added, so the button can confirm it without a toast library. */
   protected readonly justAdded = signal<string | null>(null);
+
+  /** Emplacements des cartes fantômes pendant le chargement : autant que la taille de page. */
+  protected readonly skeletons = Array.from({ length: this.pageSize }, (_, i) => i);
+
+  /**
+   * Le nom lisible de la catégorie d'un produit.
+   *
+   * <p>Le produit ne transporte que son {@code categoryPath} (`handling/pallet-trucks`). Le
+   * dernier segment est retrouvé dans l'arbre déjà chargé pour le filtre, ce qui évite un appel
+   * de plus par carte. Si l'arbre n'a pas pu être chargé, le segment brut est affiché plutôt
+   * qu'un blanc.
+   */
+  protected categoryLabel(path: string): string {
+    const slug = path.split('/').pop() ?? '';
+    const match = this.findBySlug(this.categories(), slug);
+    return match?.name ?? slug;
+  }
+
+  private findBySlug(nodes: Category[], slug: string): Category | undefined {
+    for (const node of nodes) {
+      if (node.slug === slug) {
+        return node;
+      }
+      const found = this.findBySlug(node.children ?? [], slug);
+      if (found) {
+        return found;
+      }
+    }
+    return undefined;
+  }
 
   ngOnInit(): void {
     this.loadCategories();

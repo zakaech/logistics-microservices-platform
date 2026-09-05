@@ -1,0 +1,200 @@
+<div class="page-head">
+  <div>
+    <h2 class="page-head__title">Tableau de bord</h2>
+    <p class="page-head__subtitle">
+      Vue d'ensemble du réseau logistique et de l'activité récente.
+    </p>
+  </div>
+  <div class="page-head__actions">
+    <button type="button" class="btn btn--secondary btn--sm" (click)="load()">Actualiser</button>
+  </div>
+</div>
+
+<app-problem-alert [problem]="error()" />
+
+<!-- Alerte métier : n'apparaît que lorsqu'il y a réellement quelque chose à traiter. -->
+@if (lowStockCount(); as low) {
+  @if (low > 0) {
+    <div class="alert" role="status">
+      <span class="alert__icon" aria-hidden="true"><app-icon name="alert" [size]="20" /></span>
+      <div class="alert__text">
+        <strong>Stock faible</strong>
+        <span>
+          {{ low }} référence(s) sont au niveau de leur seuil de réapprovisionnement ou en dessous.
+        </span>
+      </div>
+      <a class="btn btn--secondary btn--sm" routerLink="/inventory">Voir les stocks</a>
+    </div>
+  }
+}
+
+<!-- KPI. Chaque valeur vient d'un appel réel ; une carte reste vide plutôt que d'afficher
+     un chiffre que le backend n'a pas fourni. -->
+<section class="kpis" aria-label="Indicateurs">
+  <article class="kpi card">
+    <header>
+      <span class="kpi__label">Commandes</span>
+      <span class="kpi__icon" aria-hidden="true"><app-icon name="orders" /></span>
+    </header>
+    @if (loading()) {
+      <span class="skeleton kpi__skeleton"></span>
+    } @else {
+      <p class="kpi__value">{{ orderCount() ?? '—' }}</p>
+    }
+    <p class="kpi__context">
+      {{ isStaff() ? 'Sur l’ensemble de la plateforme' : 'Passées avec ce compte' }}
+    </p>
+  </article>
+
+  <article class="kpi card">
+    <header>
+      <span class="kpi__label">Produits au catalogue</span>
+      <span class="kpi__icon" aria-hidden="true"><app-icon name="catalog" /></span>
+    </header>
+    @if (loading()) {
+      <span class="skeleton kpi__skeleton"></span>
+    } @else {
+      <p class="kpi__value">{{ productCount() ?? '—' }}</p>
+    }
+    <p class="kpi__context">Références actives, toutes catégories</p>
+  </article>
+
+  @if (isStaff()) {
+    <article class="kpi card">
+      <header>
+        <span class="kpi__label">Entrepôts actifs</span>
+        <span class="kpi__icon" aria-hidden="true"><app-icon name="warehouse" /></span>
+      </header>
+      @if (loading()) {
+        <span class="skeleton kpi__skeleton"></span>
+      } @else {
+        <p class="kpi__value">{{ warehouses().length }}</p>
+      }
+      <p class="kpi__context">
+        @if (cities().length > 0) {
+          {{ cities().join(', ') }}
+        } @else {
+          Aucun site actif
+        }
+      </p>
+    </article>
+
+    <article class="kpi card" [class.kpi--attention]="(lowStockCount() ?? 0) > 0">
+      <header>
+        <span class="kpi__label">Stock faible</span>
+        <span class="kpi__icon" aria-hidden="true"><app-icon name="alert" /></span>
+      </header>
+      @if (lowStockCount() === null) {
+        <span class="skeleton kpi__skeleton"></span>
+      } @else {
+        <p class="kpi__value">{{ lowStockCount() }}</p>
+      }
+      <p class="kpi__context">
+        Lignes au seuil de réapprovisionnement ou en dessous
+      </p>
+    </article>
+  }
+</section>
+
+<div class="split">
+  <!-- Activité récente : les 5 dernières commandes réellement renvoyées par l'API. -->
+  <section class="card">
+    <header class="card__head">
+      <h3 class="card__title">Commandes récentes</h3>
+      <a class="btn btn--ghost btn--sm" routerLink="/orders">Tout voir</a>
+    </header>
+
+    @if (recent.loading()) {
+      <div class="card__body loading-rows">
+        <span class="skeleton row"></span>
+        <span class="skeleton row"></span>
+        <span class="skeleton row"></span>
+      </div>
+    } @else if (recent.data(); as list) {
+      @if (list.length === 0) {
+        <div class="empty-state">
+          <app-icon name="inbox" [size]="28" />
+          <p class="empty-state__title">Aucune commande pour l'instant</p>
+          <p class="empty-state__hint">
+            Les commandes passées depuis le catalogue apparaîtront ici.
+          </p>
+          <a class="btn btn--primary btn--sm" routerLink="/catalog">Parcourir le catalogue</a>
+        </div>
+      } @else {
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th scope="col">Commande</th>
+                <th scope="col">Date</th>
+                <th scope="col" class="num">Total</th>
+                <th scope="col">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (order of list; track order.id) {
+                <tr>
+                  <td>
+                    <a class="order-ref" [routerLink]="['/orders', order.id]">
+                      {{ order.orderNumber }}
+                    </a>
+                    @if (order.splitShipment) {
+                      <span class="badge badge--info">Fractionnée</span>
+                    }
+                  </td>
+                  <td class="muted">{{ order.createdAt | date: 'short' }}</td>
+                  <td class="num">{{ order.totalAmount | currency: order.currency }}</td>
+                  <td>
+                    <span class="badge" [attr.data-status]="order.status">
+                      {{ order.status | orderStatusLabel }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  </section>
+
+  <!-- Réseau : uniquement les entrepôts réellement renvoyés, avec leur nombre de références. -->
+  @if (isStaff()) {
+    <section class="card">
+      <header class="card__head">
+        <h3 class="card__title">Réseau d'entrepôts</h3>
+        <a class="btn btn--ghost btn--sm" routerLink="/inventory">Voir les stocks</a>
+      </header>
+
+      @if (loading()) {
+        <div class="card__body loading-rows">
+          <span class="skeleton row"></span>
+          <span class="skeleton row"></span>
+        </div>
+      } @else if (warehouses().length === 0) {
+        <div class="empty-state">
+          <p class="empty-state__title">Aucun entrepôt actif</p>
+        </div>
+      } @else {
+        <ul class="sites">
+          @for (site of warehouses(); track site.id) {
+            <li class="site">
+              <span class="site__icon" aria-hidden="true"><app-icon name="warehouse" /></span>
+              <span class="site__id">
+                <strong>{{ site.name }}</strong>
+                <span class="muted">{{ site.address.city }} · {{ site.code }}</span>
+              </span>
+              <span class="site__count">
+                <strong>{{ site.distinctProducts | number }}</strong>
+                <span class="muted">référence(s)</span>
+              </span>
+            </li>
+          }
+        </ul>
+        <p class="sites__foot muted">
+          {{ referenceCount() | number }} ligne(s) de stock sur {{ warehouses().length }} site(s).
+        </p>
+      }
+    </section>
+  }
+</div>

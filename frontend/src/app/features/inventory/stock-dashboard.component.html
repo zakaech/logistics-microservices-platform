@@ -1,103 +1,179 @@
-<section class="dashboard">
-  <h1>Warehouse stock</h1>
+<div class="page-head">
+  <div>
+    <h2 class="page-head__title">Stocks</h2>
+    <p class="page-head__subtitle">Niveaux par entrepôt et alertes de réapprovisionnement</p>
+  </div>
+</div>
 
-  <app-loading-bar [loading]="warehouses.loading()" label="Loading warehouses…" />
-  <app-problem-alert [problem]="warehouses.error()" />
+<app-loading-bar [loading]="warehouses.loading()" label="Chargement des entrepôts…" />
+<app-problem-alert [problem]="warehouses.error()" />
 
-  @if (warehouses.data(); as sites) {
-    @if (sites.length === 0) {
-      <p class="empty">No active warehouse is registered.</p>
-    } @else {
-      <div class="controls">
-        <label for="warehouse">Warehouse</label>
-        <select id="warehouse" [(ngModel)]="selectedWarehouseId" (change)="loadStock()">
+@if (warehouses.data(); as sites) {
+  @if (sites.length === 0) {
+    <div class="card empty-state">
+      <app-icon name="warehouse" [size]="28" />
+      <p class="empty-state__title">Aucun entrepôt actif</p>
+      <p class="empty-state__hint">Aucun site n'est actuellement enregistré comme actif.</p>
+    </div>
+  } @else {
+    <div class="toolbar card">
+      <div class="toolbar__group">
+        <label class="toolbar__label" for="warehouse">Entrepôt</label>
+        <select
+          class="select toolbar__select"
+          id="warehouse"
+          [(ngModel)]="selectedWarehouseId"
+          (change)="loadStock()"
+        >
           @for (site of sites; track site.id) {
-            <option [value]="site.id">{{ site.code }} — {{ site.name }}</option>
+            <option [value]="site.id">{{ site.name }} — {{ site.code }}</option>
           }
         </select>
-
-        <label class="toggle">
-          <input type="checkbox" [(ngModel)]="lowStockOnly" (change)="loadStock()" />
-          Low stock only
-        </label>
       </div>
 
-      @if (selectedWarehouse(); as site) {
-        <p class="site">
-          {{ site.address.city }}, {{ site.address.country }} ·
-          {{ site.distinctProducts }} product line(s) ·
-          {{ site.latitude }}, {{ site.longitude }}
-        </p>
-      }
+      <label class="toggle">
+        <input type="checkbox" [(ngModel)]="lowStockOnly" (change)="loadStock()" />
+        <span>Stock faible uniquement</span>
+      </label>
+    </div>
+
+    <!-- Fiche du site sélectionné : uniquement des données renvoyées par l'API. -->
+    @if (selectedWarehouse(); as site) {
+      <section class="site card">
+        <span class="site__icon" aria-hidden="true"><app-icon name="warehouse" [size]="22" /></span>
+        <div class="site__id">
+          <h3>{{ site.name }}</h3>
+          <p class="muted">
+            {{ site.address.line1 }} · {{ site.address.postalCode }} {{ site.address.city }},
+            {{ site.address.country }}
+          </p>
+        </div>
+        <dl class="site__facts">
+          <div>
+            <dt>Code</dt>
+            <dd class="sku">{{ site.code }}</dd>
+          </div>
+          <div>
+            <dt>Références</dt>
+            <dd>{{ site.distinctProducts }}</dd>
+          </div>
+          <div>
+            <dt>Coordonnées</dt>
+            <dd class="sku">{{ site.latitude }}, {{ site.longitude }}</dd>
+          </div>
+        </dl>
+      </section>
     }
   }
+}
 
-  <app-loading-bar [loading]="stock.loading()" label="Loading stock levels…" />
-  <app-problem-alert [problem]="stock.error()" />
+<app-loading-bar [loading]="stock.loading()" label="Chargement des niveaux de stock…" />
+<app-problem-alert [problem]="stock.error()" />
 
-  @if (stock.data(); as stockPage) {
-    @if (lowStockCount() > 0 && !lowStockOnly) {
-      <p class="alert-banner" role="status">
-        <strong>{{ lowStockCount() }}</strong> line(s) on this page are at or below their reorder
-        threshold.
-      </p>
-    }
+@if (stock.data(); as stockPage) {
+  @if (lowStockCount() > 0 && !lowStockOnly) {
+    <div class="alert" role="status">
+      <span class="alert__icon" aria-hidden="true"><app-icon name="alert" [size]="20" /></span>
+      <div class="alert__text">
+        <strong>Stock faible</strong>
+        <span>
+          {{ lowStockCount() }} référence(s) de cette page sont au niveau du seuil de
+          réapprovisionnement ou en dessous.
+        </span>
+      </div>
+      <button type="button" class="btn btn--secondary btn--sm" (click)="showOnlyLowStock()">
+        N'afficher que celles-ci
+      </button>
+    </div>
+  }
 
-    @if (stockPage.content.length === 0) {
-      <p class="empty">
+  @if (stockPage.content.length === 0) {
+    <div class="card empty-state">
+      <app-icon name="check" [size]="28" />
+      <p class="empty-state__title">
         @if (lowStockOnly) {
-          No line is below its reorder threshold. Nothing to restock.
+          Aucune alerte de stock
         } @else {
-          This warehouse holds no stock line yet.
+          Aucune ligne de stock
         }
       </p>
-    } @else {
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">Product</th>
-            <th scope="col" class="num">On hand</th>
-            <th scope="col" class="num">Reserved</th>
-            <th scope="col" class="num">Available</th>
-            <th scope="col" class="num">Threshold</th>
-            <th scope="col">Updated</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (item of stockPage.content; track item.id) {
-            <tr [class.row--low]="item.lowStock">
-              <td class="product">{{ item.productId }}</td>
-              <td class="num">{{ item.quantityOnHand }}</td>
-              <td class="num reserved">{{ item.quantityReserved }}</td>
-              <td class="num available">
-                {{ item.availableQuantity }}
-                @if (item.lowStock) {
-                  <span class="badge" title="At or below the reorder threshold">low</span>
-                }
-              </td>
-              <td class="num">{{ item.reorderThreshold }}</td>
-              <td class="when">{{ item.updatedAt | date: 'short' }}</td>
+      <p class="empty-state__hint">
+        @if (lowStockOnly) {
+          Aucune référence n'est sous son seuil de réapprovisionnement dans cet entrepôt.
+        } @else {
+          Cet entrepôt ne contient encore aucune ligne de stock.
+        }
+      </p>
+    </div>
+  } @else {
+    <div class="card">
+      <div class="table-wrap">
+        <table class="data-table stock-table">
+          <thead>
+            <tr>
+              <th scope="col">Produit</th>
+              <th scope="col" class="num">En stock</th>
+              <th scope="col" class="num">Réservé</th>
+              <th scope="col" class="num">Disponible</th>
+              <th scope="col" class="num">Seuil</th>
+              <th scope="col">Mis à jour</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (item of stockPage.content; track item.id) {
+              <tr [class.is-low]="item.lowStock">
+                <td>
+                  <strong>{{ productName(item.productId) }}</strong>
+                  @if (productSku(item.productId); as sku) {
+                    <span class="sku block">{{ sku }}</span>
+                  }
+                </td>
+                <td class="num">{{ item.quantityOnHand }}</td>
+                <td class="num reserved">{{ item.quantityReserved }}</td>
+                <td class="num available">{{ item.availableQuantity }}</td>
+                <td class="num threshold">{{ item.reorderThreshold }}</td>
+                <td class="when">
+                  @if (item.lowStock) {
+                    <span class="badge badge--warning">
+                      <app-icon name="alert" [size]="12" />Stock faible
+                    </span>
+                  } @else {
+                    <span class="muted">{{ item.updatedAt | date: 'short' }}</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
 
       <p class="legend">
-        <strong>Available</strong> is on hand minus reserved — it is derived, never stored, so the
-        three numbers cannot disagree.
+        La quantité <strong>disponible</strong> est la quantité en stock moins la quantité réservée.
+        Elle est calculée par le serveur, jamais stockée : les trois nombres ne peuvent donc pas
+        diverger.
       </p>
 
       @if (stockPage.totalPages > 1) {
         <nav class="pager" aria-label="Pagination">
-          <button type="button" [disabled]="stockPage.first" (click)="goToPage(page() - 1)">
-            Previous
+          <button
+            type="button"
+            class="btn btn--secondary btn--sm"
+            [disabled]="stockPage.first"
+            (click)="goToPage(page() - 1)"
+          >
+            Précédent
           </button>
-          <span>Page {{ stockPage.page + 1 }} of {{ stockPage.totalPages }}</span>
-          <button type="button" [disabled]="stockPage.last" (click)="goToPage(page() + 1)">
-            Next
+          <span>Page {{ stockPage.page + 1 }} sur {{ stockPage.totalPages }}</span>
+          <button
+            type="button"
+            class="btn btn--secondary btn--sm"
+            [disabled]="stockPage.last"
+            (click)="goToPage(page() + 1)"
+          >
+            Suivant
           </button>
         </nav>
       }
-    }
+    </div>
   }
-</section>
+}

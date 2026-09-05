@@ -1,68 +1,113 @@
-<section class="orders">
-  <header class="orders__head">
-    <h1>Orders</h1>
-    <a class="orders__new" routerLink="/catalog">New order</a>
-  </header>
-
-  <div class="filters">
-    <label for="status">Status</label>
-    <select id="status" [(ngModel)]="selectedStatus" (change)="load()">
-      <option value="">All</option>
-      @for (status of statuses; track status) {
-        <option [value]="status">{{ status }}</option>
+<div class="page-head">
+  <div>
+    <h2 class="page-head__title">Commandes</h2>
+    <p class="page-head__subtitle">
+      @if (result.data(); as pageData) {
+        {{ pageData.totalElements }} commande(s)
+      } @else {
+        Suivi du cycle de vie des commandes
       }
-    </select>
+    </p>
   </div>
+  <div class="page-head__actions">
+    <a class="btn btn--primary btn--sm" routerLink="/catalog">
+      <app-icon name="cart" [size]="16" />Nouvelle commande
+    </a>
+  </div>
+</div>
 
-  <app-loading-bar [loading]="result.loading()" label="Loading orders…" />
-  <app-problem-alert [problem]="result.error()" />
+<div class="toolbar card">
+  <label class="toolbar__label" for="status">Statut</label>
+  <select class="select toolbar__select" id="status" [(ngModel)]="selectedStatus" (change)="load()">
+    <option value="">Tous les statuts</option>
+    @for (status of statuses; track status) {
+      <option [value]="status">{{ status | orderStatusLabel }}</option>
+    }
+  </select>
+</div>
 
-  @if (result.data(); as pageData) {
-    @if (pageData.content.length === 0) {
-      <p class="empty">No order matches this filter.</p>
-    } @else {
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">Order</th>
-            <th scope="col">Placed</th>
-            <th scope="col">Lines</th>
-            <th scope="col">Total</th>
-            <th scope="col">Shipments</th>
-            <th scope="col">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (order of pageData.content; track order.id) {
+<app-loading-bar [loading]="result.loading()" label="Chargement des commandes…" />
+<app-problem-alert [problem]="result.error()" />
+
+@if (result.data(); as pageData) {
+  @if (pageData.content.length === 0) {
+    <div class="card empty-state">
+      <app-icon name="inbox" [size]="28" />
+      <p class="empty-state__title">Aucune commande</p>
+      <p class="empty-state__hint">
+        @if (selectedStatus) {
+          Aucune commande ne correspond à ce statut. Essayez un autre filtre.
+        } @else {
+          Les commandes passées depuis le catalogue apparaîtront ici.
+        }
+      </p>
+      <a class="btn btn--primary btn--sm" routerLink="/catalog">Parcourir le catalogue</a>
+    </div>
+  } @else {
+    <div class="card">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
             <tr>
-              <td><a [routerLink]="['/orders', order.id]">{{ order.orderNumber }}</a></td>
-              <td>{{ order.createdAt | date: 'short' }}</td>
-              <td>{{ order.lineCount }}</td>
-              <td>{{ order.totalAmount | currency: order.currency }}</td>
-              <td>
-                @if (order.splitShipment) {
-                  <span class="tag tag--split">Split</span>
-                } @else {
-                  <span class="tag">Single</span>
-                }
-              </td>
-              <td><span class="status" [attr.data-status]="order.status">{{ order.status }}</span></td>
+              <th scope="col">Commande</th>
+              <th scope="col">Passée le</th>
+              <th scope="col" class="num">Lignes</th>
+              <th scope="col" class="num">Total</th>
+              <th scope="col">Expédition</th>
+              <th scope="col">Statut</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (order of pageData.content; track order.id) {
+              <tr>
+                <td>
+                  <a class="order-ref" [routerLink]="['/orders', order.id]">
+                    {{ order.orderNumber }}
+                  </a>
+                </td>
+                <td class="muted">{{ order.createdAt | date: 'short' }}</td>
+                <td class="num">{{ order.lineCount }}</td>
+                <td class="num">{{ order.totalAmount | currency: order.currency }}</td>
+                <td>
+                  @if (order.splitShipment) {
+                    <span class="badge badge--info">Fractionnée</span>
+                  } @else {
+                    <span class="badge badge--neutral">Unique</span>
+                  }
+                </td>
+                <!-- data-status garde la valeur technique : c'est la clé des styles. -->
+                <td>
+                  <span class="badge" [attr.data-status]="order.status">
+                    {{ order.status | orderStatusLabel }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
 
       @if (pageData.totalPages > 1) {
         <nav class="pager" aria-label="Pagination">
-          <button type="button" [disabled]="pageData.first" (click)="goToPage(page() - 1)">
-            Previous
+          <button
+            type="button"
+            class="btn btn--secondary btn--sm"
+            [disabled]="pageData.first"
+            (click)="goToPage(page() - 1)"
+          >
+            Précédent
           </button>
-          <span>Page {{ pageData.page + 1 }} of {{ pageData.totalPages }}</span>
-          <button type="button" [disabled]="pageData.last" (click)="goToPage(page() + 1)">
-            Next
+          <span>Page {{ pageData.page + 1 }} sur {{ pageData.totalPages }}</span>
+          <button
+            type="button"
+            class="btn btn--secondary btn--sm"
+            [disabled]="pageData.last"
+            (click)="goToPage(page() + 1)"
+          >
+            Suivant
           </button>
         </nav>
       }
-    }
+    </div>
   }
-</section>
+}

@@ -1,10 +1,11 @@
 # ---------------------------------------------------------------------------
-# Local development only. Docker Compose merges this file automatically, so
-# `docker compose up` picks it up and `docker compose -f docker-compose.yml up`
-# does not.
+# Développement local uniquement. Docker Compose fusionne ce fichier automatiquement :
+# `docker compose up` le prend en compte, tandis que
+# `docker compose -f docker-compose.yml up` l'ignore.
 #
-# It publishes ports the production topology keeps internal, so you can reach a
-# database with a SQL client or hit a service directly while debugging.
+# Il publie des ports que la topologie de production garde internes, afin de pouvoir
+# atteindre une base avec un client SQL ou interroger un service directement pendant
+# le débogage.
 # ---------------------------------------------------------------------------
 services:
 
@@ -16,8 +17,30 @@ services:
     ports:
       - "27017:27017"
 
+  # Chaque service expose son propre document OpenAPI et son Swagger UI. Publier les
+  # ports ici plutôt que dans docker-compose.yml préserve la topologie de production
+  # - seuls la gateway et le frontend y sont joignables - tout en rendant la
+  # documentation d'API de chaque service consultable pendant le développement.
   auth-service:
     ports:
       - "8081:8081"
+    environment:
+      LOG_LEVEL: DEBUG
+
+  catalog-service:
+    ports:
+      - "8082:8082"
+    environment:
+      LOG_LEVEL: DEBUG
+
+  inventory-service:
+    ports:
+      - "8083:8083"
+    environment:
+      LOG_LEVEL: DEBUG
+
+  order-service:
+    ports:
+      - "8084:8084"
     environment:
       LOG_LEVEL: DEBUG

@@ -6,7 +6,7 @@ import java.util.UUID;
 /**
  * Raised when a reservation cannot be satisfied.
  *
- * <p>Carries exactly what is short, per warehouse and product. That detail is not decoration: when
+ * <p>Carries exactly what is short, per warehouse and product. That detail is needed: when
  * order-service gets this back it re-reads availability and retries the allocation once, and it can
  * only decide sensibly if it knows which line failed and by how much.
  */

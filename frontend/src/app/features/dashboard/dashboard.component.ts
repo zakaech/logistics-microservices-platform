@@ -20,8 +20,7 @@ import { RequestState } from '../../shared/request-state';
  * {@code totalElements} des endpoints paginés, les entrepôts sont ceux que renvoie
  * inventory-service, et l'alerte de stock faible compte les lignes que le serveur a lui-même
  * marquées sous leur seuil. Aucune tendance, aucun pourcentage, aucune valeur composée : la
- * plateforme ne conserve pas d'historique permettant de les calculer, et un chiffre inventé sur un
- * tableau de bord est un mensonge qui se remarque en entretien.
+ * plateforme ne conserve pas d'historique permettant de les calculer.
  *
  * <p>Ce que voit l'utilisateur dépend de son rôle, parce que les endpoints eux-mêmes en dépendent :
  * un client n'a accès ni aux entrepôts ni aux niveaux de stock, il n'est donc pas utile de lui
@@ -121,7 +120,7 @@ export class DashboardComponent {
    * <p>Le filtrage est fait par le serveur (`lowStock=true`) et seul {@code totalElements} est lu :
    * la page demandée est vide, on ne rapatrie donc pas des lignes pour les compter côté navigateur.
    * Il n'existe pas d'endpoint agrégé sur l'ensemble du réseau ; avec quelques entrepôts, une
-   * requête par site reste honnête et j'ai préféré cela à l'invention d'un chiffre global.
+   * requête par site reste acceptable.
    */
   private countLowStock(warehouses: Warehouse[]): void {
     forkJoin(

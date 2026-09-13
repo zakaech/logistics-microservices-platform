@@ -348,8 +348,8 @@ lettres ISO-3166. **`customerId` est délibérément absent de la charge utile**
 ```
 
 > `POST /orders/allocation-preview` existe pour une raison qui dépasse le confort : il rend la règle métier
-> **observable dans l'interface**. Pouvoir montrer, en direct, que deux stratégies produisent deux plans
-> différents sur la même commande est la démonstration la plus forte du patron Strategy en entretien.
+> **observable**. Deux stratégies produisant deux plans différents sur la même commande est la
+> démonstration la plus directe du patron Strategy.
 
 ---
 

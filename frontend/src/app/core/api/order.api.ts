@@ -24,8 +24,7 @@ export class OrderApi {
    * Places an order.
    *
    * <p>Neither the customer nor the total is sent: the server takes the customer from the signed
-   * token and prices the order from the catalogue. A client that could name its own price would be
-   * a client that eventually does.
+   * token and prices the order from the catalogue. Neither value is trusted from the client.
    */
   create(request: CreateOrderRequest): Observable<Order> {
     return this.http.post<Order>(this.baseUrl, request);

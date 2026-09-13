@@ -276,8 +276,7 @@ classDiagram
 
 - **Le moteur est pur.** `AbstractAllocationStrategy` prend une `AllocationRequest` (de simples records) et
   renvoie un `AllocationPlan`. Aucun repository, aucun client HTTP, aucune annotation Spring, aucune horloge.
-  Conséquence : chaque scénario d'affectation est un simple test JUnit, sans mock et sans conteneur — c'est
-  la partie qu'un examinateur demandera à voir testée.
+  Conséquence : chaque scénario d'affectation est un simple test JUnit, sans mock et sans conteneur.
 - **Le domaine n'est pas anémique.** `Order.applyAllocation(...)`, `Order.transitionTo(...)` et
   `OrderStatus.canTransitionTo(...)` portent les règles ; la couche service orchestre mais ne décide pas.
 - **Des records pour le moteur, des entités pour la persistance.** Les types d'affectation sont des `record`
@@ -477,5 +476,4 @@ mouvement illégal par une `IllegalOrderStateException` → `409`. Chaque transi
 
 > Un véritable **patron State** (une classe par statut) a été envisagé puis écarté : avec sept statuts et
 > aucun comportement variant au-delà des transitions autorisées, une table de transitions est plus simple et
-> plus lisible. Cela vaut la peine d'être dit en entretien — savoir quand *ne pas* appliquer un patron fait
-> partie de la réponse.
+> plus lisible. Savoir quand *ne pas* appliquer un patron fait partie de la conception.

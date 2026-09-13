@@ -168,9 +168,9 @@ sequenceDiagram
 transactions distribuées : la combinaison d'une réservation *idempotente* (`reference` unique), d'une
 tentative de reprise *bornée*, d'une *action compensatoire* explicite et d'un *TTL* en dernière ligne de
 défense maintient la cohérence du stock sans introduire une infrastructure dont le projet n'a pas besoin. La
-limite honnête, qu'il vaut mieux énoncer que masquer : une partition réseau à l'instant précis de la
-confirmation peut laisser la commande en `ALLOCATED` jusqu'au passage de la tâche de réconciliation. C'est de
-la cohérence à terme, et c'est un compromis assumé.
+limite : une partition réseau à l'instant précis de la confirmation peut laisser la commande en
+`ALLOCATED` jusqu'au passage de la tâche de réconciliation. C'est de la cohérence à terme, et c'est un
+compromis assumé.
 
 ## 3. Décisions non évidentes dans ce flux
 

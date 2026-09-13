@@ -108,8 +108,7 @@ réseau est un détail de déploiement, pas une garantie de sécurité*.
 (`auth_db`, `inventory_db`, `order_db`), créées par un script d'initialisation, chacune avec **son propre
 utilisateur dédié**. Aucun service ne peut lire le schéma d'un autre : la règle « aucune jointure SQL
 inter-services, jamais » est donc appliquée par les permissions plutôt que par la discipline. C'est un
-compromis assumé à l'échelle d'un poste de développement, et il vaut mieux le présenter comme tel en
-entretien.
+compromis assumé à l'échelle d'un poste de développement.
 
 ## 4. Frontières des services — pourquoi ces découpes
 
@@ -176,8 +175,7 @@ requêtes**, non par goût.
 - Les données produit ne portent aucun invariant transactionnel inter-entités, ce qui est précisément ce que
   MongoDB n'offre *pas* à bon compte et ce que PostgreSQL offre.
 
-**Le contre-argument honnête** (mieux vaut l'énoncer soi-même que le voir arriver de l'examinateur) :
-PostgreSQL `JSONB` avec un index GIN traiterait aussi des attributs variables. MongoDB est retenu parce que
+**Le contre-argument** : PostgreSQL `JSONB` avec un index GIN traiterait aussi des attributs variables. MongoDB est retenu parce que
 le catalogue est le *seul* contexte où le document est l'agrégat, et parce qu'exploiter un second magasin de
 données fait partie de l'exercice. Ce qui serait indéfendable, c'est le choix inverse : mettre le stock ou
 les commandes dans MongoDB et perdre les garanties transactionnelles dont dépend le moteur d'affectation.

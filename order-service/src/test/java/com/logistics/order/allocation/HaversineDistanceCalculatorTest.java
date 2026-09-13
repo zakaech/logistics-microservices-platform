@@ -50,7 +50,7 @@ class HaversineDistanceCalculatorTest {
         double atSixty = calculator.distanceKm(GeoPoint.of(60, 0), GeoPoint.of(60, 1));
 
         // cos(60 degrees) = 0.5, so the parallel is half as long. A flat Pythagorean
-        // approximation would report the two as equal - which is exactly why it is not used.
+        // approximation would report the two as equal - which is why it is not used.
         assertThat(atSixty).isCloseTo(atEquator / 2, org.assertj.core.data.Offset.offset(0.5));
     }
 

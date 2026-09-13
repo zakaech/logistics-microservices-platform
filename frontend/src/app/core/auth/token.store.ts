@@ -12,7 +12,7 @@ const REFRESH_TOKEN_KEY = 'logistics.refreshToken';
  * reach of injected JavaScript. That needs the backend to set the cookie, which this platform does
  * not do yet, so both are in localStorage for now.
  *
- * <p>The trade-off, stated plainly: localStorage is readable by any script running on the origin,
+ * <p>The trade-off: localStorage is readable by any script running on the origin,
  * so a successful XSS steals the session. It buys a session that survives a page reload. The
  * mitigations that make it acceptable here are short-lived access tokens (15 minutes), refresh
  * tokens that rotate on every use so a stolen one is single-use, and Angular escaping interpolated

@@ -20,7 +20,7 @@ import java.util.Map;
  *
  * <p>Validation is <b>strict</b>: an attribute the category does not declare is rejected. The
  * lenient alternative was considered and refused, because tolerating unknown keys makes the schema
- * decorative - a typo like {@code capacityKG} would be stored happily and silently disappear from
+ * decorative - a typo like {@code capacityKG} would be stored and silently disappear from
  * every filter and comparison built on {@code capacityKg}.
  *
  * <p>No I/O, no framework: the whole rule is a pure function of a map and a schema, so every case

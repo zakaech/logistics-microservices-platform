@@ -46,9 +46,9 @@
         <!--
           Newer than the version the Spring Boot BOM manages. The docker-java client in
           Testcontainers 1.19.x negotiates Docker API 1.32, below the 1.40 floor Docker
-          Engine 29 enforces. NOTE: 1.20.4 does not fully resolve Docker Engine 29 either
-          - integration tests skip themselves there (see ReservationConcurrencyIT) and run
-          normally on Linux CI and on Docker Desktop with an older engine.
+          Engine 29 enforces. 1.20.4 does not fully resolve Docker Engine 29 either:
+          integration tests skip themselves there (see ReservationConcurrencyIT) and are
+          expected to run on Linux and on Docker Desktop with an older engine.
         -->
         <testcontainers.version>1.20.4</testcontainers.version>
     </properties>

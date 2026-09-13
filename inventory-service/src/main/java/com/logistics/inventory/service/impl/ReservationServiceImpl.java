@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
  * makes the second transaction wait a few milliseconds and then succeed or fail on the true
  * remaining quantity. One decision, no retry storm.
  *
- * <p>The cost is real and worth stating: writers serialise on the contended rows, so throughput per
+ * <p>The cost: writers serialise on the contended rows, so throughput per
  * product is bounded by how fast a reservation transaction commits. That is the right trade for
  * stock, where a wrong answer is worse than a slow one. It would be the wrong trade for the
  * catalogue, which is why catalog-service uses optimistic locking instead.

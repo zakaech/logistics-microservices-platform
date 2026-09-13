@@ -25,7 +25,7 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401 && !request.url.includes('/api/v1/auth/login')) {
         // The token is gone, expired or revoked. Staying on the page would show a shell whose every
-        // request fails; the login screen is the honest answer.
+        // request fails, so the user is sent back to sign in.
         tokens.clear();
         void router.navigate(['/login'], {
           queryParams: { returnUrl: router.url, reason: 'session-expired' },

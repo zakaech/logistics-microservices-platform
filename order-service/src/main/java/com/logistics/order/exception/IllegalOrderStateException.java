@@ -9,7 +9,7 @@ import java.util.Set;
  *
  * <p>Answers 409 rather than succeeding quietly. Shipping an order that was cancelled, or
  * cancelling one already delivered, almost always means the caller lost track of the lifecycle -
- * and hiding that turns a visible bug into a warehouse dispatching goods nobody is paying for.
+ * and hiding that turns a visible bug into goods dispatched for a cancelled order.
  */
 public class IllegalOrderStateException extends RuntimeException {
 

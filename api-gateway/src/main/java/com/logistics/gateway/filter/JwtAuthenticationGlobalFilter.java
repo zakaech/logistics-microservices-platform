@@ -35,7 +35,7 @@ import java.util.List;
  *
  * <p>The {@code Authorization} header is forwarded untouched: downstream services re-validate the
  * token themselves (decision D2) and never trust these headers for authorisation. The headers exist
- * for convenience and audit, not as a security mechanism - which is precisely why stripping them
+ * for convenience and audit, not as a security mechanism - which is why stripping them
  * still matters.
  */
 @Slf4j

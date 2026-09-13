@@ -20,8 +20,7 @@ export const authGuard: CanActivateFn = (_route, state) => {
   // honest about being signed out.
   tokens.clear();
 
-  // returnUrl, so signing in lands where the user was headed rather than dumping them on a home
-  // page and making them navigate again.
+  // returnUrl, so signing in lands where the user was headed rather than on a home page.
   return router.createUrlTree(['/login'], {
     queryParams: { returnUrl: state.url },
   });

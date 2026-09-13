@@ -15,7 +15,7 @@ import java.util.List;
  * Runs the allocation engine WITHOUT creating an order or touching stock.
  *
  * <p>Simulation matters for two reasons. Operationally, it answers "where would this ship from?"
- * before a customer commits. And it is the honest way to compare strategies: asking for several at
+ * before a customer commits. And it is the reliable way to compare strategies: asking for several at
  * once runs each against the same availability snapshot, so any difference in the plans comes from
  * the rules and not from stock having moved in between.
  */

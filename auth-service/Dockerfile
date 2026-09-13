@@ -8,7 +8,7 @@ WORKDIR /workspace
 
 # Copier d'abord les seuls poms : cette couche n'est reconstruite que lorsqu'une
 # dépendance change, si bien que les modifications de source du quotidien ne
-# retéléchargent pas la terre entière.
+# retéléchargent pas les dépendances.
 COPY pom.xml ./
 COPY auth-service/pom.xml auth-service/pom.xml
 COPY catalog-service/pom.xml catalog-service/pom.xml

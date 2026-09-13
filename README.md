@@ -152,7 +152,7 @@ large et creuse, un anti-pattern EAV, ou une table par catégorie. Ici, la caté
 `attributeSchema` et le produit porte un objet imbriqué validé contre lui — **le schéma est une
 donnée**, donc ajouter une catégorie ne demande aucune migration.
 
-*Le contre-argument honnête :* du `JSONB` PostgreSQL avec un index GIN ferait également l'affaire.
+*Le contre-argument :* du `JSONB` PostgreSQL avec un index GIN ferait également l'affaire.
 MongoDB est retenu parce que le catalogue est le seul contexte où le document *est* l'agrégat. Ce qui
 serait indéfendable, c'est l'inverse — mettre le stock ou les commandes dans MongoDB et perdre les
 garanties transactionnelles dont dépend le moteur d'affectation.

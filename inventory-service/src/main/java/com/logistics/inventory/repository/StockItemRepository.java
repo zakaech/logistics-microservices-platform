@@ -49,7 +49,7 @@ public interface StockItemRepository extends JpaRepository<StockItem, UUID> {
      * change. Stock is contended precisely when it matters - the moment the last units are being
      * taken - and that is exactly when optimistic locking degrades into a retry storm.
      *
-     * <p>Second, {@code ORDER BY s.id} is not cosmetic. Two orders touching the same two stock rows
+     * <p>Second, {@code ORDER BY s.id} matters. Two orders touching the same two stock rows
      * in opposite orders would each hold what the other waits for, and the database would kill one
      * on a deadlock. Acquiring locks in a single global order - the primary key - makes that
      * deadlock impossible by construction rather than merely unlikely.

@@ -27,13 +27,12 @@ import java.util.stream.Collectors;
  * What happens to stock when a reservation reaches a terminal state.
  *
  * <p>Confirm, cancel and expire differ only in the effect on the held units, so the effect lives in
- * one place: releasing stock in three separate methods is how one of them ends up forgetting to.
+ * one place, so the release logic cannot drift between callers.
  *
  * <p>It is a separate bean rather than a private method for a concrete reason. The expiry sweep
  * needs each reservation in its OWN transaction, and Spring applies {@code @Transactional} through
  * a proxy - a call from one method of a class to another of the same class bypasses that proxy
- * entirely and would silently run in the caller's transaction, which is exactly what the sweep must
- * not do.
+ * entirely and would silently run in the caller's transaction, which the sweep must avoid.
  */
 @Slf4j
 @Component

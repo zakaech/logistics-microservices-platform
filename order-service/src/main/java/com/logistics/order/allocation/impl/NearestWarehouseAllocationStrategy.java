@@ -19,7 +19,7 @@ import java.util.List;
  * whatever each can give, until the order is filled.
  *
  * <p>The trade-off is explicit and is the whole point of having a second strategy to compare it
- * with: this one will happily split an order across two nearby sites even when a single, slightly
+ * with: this one will split an order across two nearby sites even when a single, slightly
  * more distant warehouse could have shipped everything in one parcel. That is the right answer when
  * transport is billed by distance, and the wrong one when it is billed per shipment.
  */

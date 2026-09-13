@@ -254,8 +254,7 @@ routes chargées paresseusement avec `loadComponent`, une couche `HttpClient` ty
 Deux écrans devaient porter le message du projet. Voici ce qui a été livré :
 
 - **`orders/allocation-map`** *(prévu)* → livré sous le nom **`orders/order-detail`** : le suivi d'une
-  commande, montrant chaque expédition, son entrepôt et la distance qui a motivé la décision. C'est
-  l'écran à démontrer en entretien.
+  commande, montrant chaque expédition, son entrepôt et la distance qui a motivé la décision.
 - **`admin/allocation-simulator`** *(prévu, **non implémenté**)* — devait appeler
   `POST /orders/allocation-preview` et afficher les deux plans côte à côte. L'endpoint existe et est
   fonctionnel, mais aucun écran ne l'appelle : la comparaison des deux stratégies se fait en passant
@@ -275,7 +274,7 @@ test(order): cover split allocation across three warehouses
 chore(docker): pin postgres image version
 ```
 
-La portée est le nom du module. Un commit par changement cohérent — un relecteur (ou un examinateur) qui lit
+La portée est le nom du module. Un commit par changement cohérent — un relecteur qui lit
 `git log --oneline` doit voir le projet se construire, et non quinze commits intitulés « update ».
 
 > Les messages de commit restent en anglais : c'est la convention Conventional Commits, et elle est

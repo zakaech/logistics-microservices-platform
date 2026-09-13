@@ -14,8 +14,7 @@ const STORAGE_KEY = 'logistics.cart';
  * <p>Kept in a signal so every consumer - the badge in the toolbar, the checkout screen - reads one
  * source and updates without any subscription bookkeeping.
  *
- * <p>Persisted to localStorage on every change: a basket that vanishes on refresh is the fastest way
- * to lose an order. It holds only product ids and quantities; the price shown is whatever the
+ * <p>Persisted to localStorage on every change, so a refresh does not empty the basket. It holds only product ids and quantities; the price shown is whatever the
  * catalogue returns now, and the price actually charged is what the server computes at checkout, so
  * a stale basket cannot lock in an old price.
  */

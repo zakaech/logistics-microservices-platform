@@ -118,7 +118,7 @@ export class OrderDetailComponent implements OnInit {
    *
    * <p>The reload is deliberate rather than patching the local object: the server may have changed
    * more than the status - the timeline gains an entry, and a cancellation releases stock - and
-   * guessing at those locally is how a screen starts lying.
+   * patching the local object would let it diverge from the server.
    */
   private act(action: () => import('rxjs').Observable<Order>): void {
     this.acting.set(true);

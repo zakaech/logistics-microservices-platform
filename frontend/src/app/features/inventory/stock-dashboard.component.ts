@@ -23,7 +23,7 @@ import { RequestState } from '../../shared/request-state';
  *
  * <p>Three quantities are shown rather than one, because they answer different questions: what is
  * physically present, what is already promised to orders, and what a new order could still take.
- * Showing only the first is how a warehouse oversells.
+ * Showing only the first would allow overselling.
  */
 @Component({
   selector: 'app-stock-dashboard',
@@ -52,9 +52,8 @@ export class StockDashboardComponent implements OnInit {
    * Identifiant produit -> nom lisible.
    *
    * <p>Une ligne de stock ne transporte que le {@code productId} : inventory-service ne connaît
-   * pas les libellés du catalogue, et c'est bien ainsi — la frontière entre les deux services est
-   * exactement là. Mais afficher `6a9b5035…` à un responsable d'entrepôt n'a aucun sens, donc le
-   * nom est résolu ici, à l'affichage, par un seul appel au catalogue plutôt qu'un par ligne.
+   * pas les libellés du catalogue, c'est la frontière entre les deux services. Le nom est donc
+   * résolu ici, à l'affichage, par un seul appel au catalogue plutôt qu'un par ligne.
    *
    * <p>Un identifiant absent de la table reste affiché tel quel : mieux vaut une référence brute
    * qu'une case vide.

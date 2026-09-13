@@ -289,7 +289,7 @@ Contraintes et index :
 
 **Contrôle de concurrence — pessimiste sur le chemin de réservation** (décision D11). Créer une réservation
 ouvre une transaction et prend un verrou d'écriture sur chaque `stock_item` concerné via
-`SELECT … FOR UPDATE`, **toujours par ordre croissant d'`id`**. Deux points à défendre en entretien :
+`SELECT … FOR UPDATE`, **toujours par ordre croissant d'`id`**. Deux points :
 
 - C'est l'ordonnancement des verrous qui supprime les interblocages : deux commandes concurrentes touchant
   les deux mêmes articles de stock ne peuvent plus détenir chacune ce que l'autre attend.

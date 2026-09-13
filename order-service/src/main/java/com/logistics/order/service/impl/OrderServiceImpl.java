@@ -106,7 +106,7 @@ public class OrderServiceImpl implements OrderService {
      * <p>The retry exists because availability is a snapshot, not a lock: another order can consume
      * the same units between reading and reserving. It is bounded, deliberately. Retrying
      * indefinitely under contention turns a stockout into a stampede, and after a second refusal
-     * the honest answer is that the stock is genuinely gone.
+     * the stock is treated as unavailable.
      */
     private AllocatedOrder allocateAndReserve(Order order, String requestedStrategy, String actor) {
         WarehouseAllocationStrategy strategy = strategyResolver.resolve(requestedStrategy);

@@ -9,6 +9,7 @@ import com.logistics.inventory.dto.request.CreateReservationRequest;
 import com.logistics.inventory.exception.InsufficientStockException;
 import com.logistics.inventory.repository.ReservationRepository;
 import com.logistics.inventory.repository.StockItemRepository;
+import com.logistics.inventory.repository.StockMovementRepository;
 import com.logistics.inventory.repository.WarehouseRepository;
 import com.logistics.inventory.service.ReservationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,11 +67,15 @@ class ReservationConcurrencyIT {
     private StockItemRepository stockItemRepository;
     @Autowired
     private ReservationRepository reservationRepository;
+    @Autowired
+    private StockMovementRepository stockMovementRepository;
 
     private UUID warehouseId;
 
     @BeforeEach
     void setUp() {
+        // The ledger references stock items, so it has to go first.
+        stockMovementRepository.deleteAll();
         reservationRepository.deleteAll();
         stockItemRepository.deleteAll();
         warehouseRepository.deleteAll();

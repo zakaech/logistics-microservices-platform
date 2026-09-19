@@ -7,6 +7,9 @@ pourquoi**.
 
 Java 17 · Spring Boot 3 · Spring Cloud Gateway · PostgreSQL · MongoDB · Angular 21 · Docker
 
+[![CI](https://github.com/zakaech/logistics-microservices-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/zakaech/logistics-microservices-platform/actions/workflows/ci.yml)
+[![Licence MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+
 ---
 
 ## Présentation
@@ -281,7 +284,7 @@ situation précise à observer :
 ## Tests
 
 ```bash
-mvn -B verify                                          # 101 tests unitaires, cinq modules
+mvn -B verify                                          # 103 tests, cinq modules (voir note)
 cd frontend && npm ci --legacy-peer-deps && npm test   # 33 tests front-end
 ```
 
@@ -290,8 +293,13 @@ de Vitest généré par Angular 21.
 
 Prérequis hors Docker : JDK 17+ et Maven 3.9+ pour le back-end, Node 22.12+ pour le front-end.
 
-Les deux commandes ci-dessus sont **la totalité de la suite automatisée du dépôt** : 134 tests, tous
-reproductibles après un clone.
+Les deux commandes ci-dessus sont **la totalité de la suite automatisée du dépôt** : 136 tests —
+101 unitaires et 2 d'intégration côté back-end, 33 côté front-end. Un workflow GitHub Actions les
+exécute à chaque push sur `main` ; le badge en tête de ce fichier reflète le dernier run.
+
+Les 2 tests d'intégration (`ReservationConcurrencyIT`) démarrent un PostgreSQL via Testcontainers.
+En local, sur une machine dont Docker n'est pas joignable par Testcontainers, ils se désactivent
+d'eux-mêmes et `mvn verify` en rapporte 101 ; sur la CI, ils s'exécutent — voir « Limites connues ».
 
 Au-delà, une **campagne de validation manuelle** a été menée contre la pile en fonctionnement lors de
 la finalisation : **191 assertions**, dont 67 empruntant exactement le chemin HTTP du navigateur
@@ -380,19 +388,20 @@ regardé de près.
 
 ### Ce qui est vérifié, et ce qui ne l'est pas
 
-La suite automatisée du dépôt compte **134 tests unitaires** (101 back-end, 33 front-end). S'y ajoute
+La suite automatisée du dépôt compte **136 tests** (103 back-end dont 2 d'intégration, 33 front-end).
+S'y ajoute
 une campagne manuelle de **191 assertions** contre la pile en fonctionnement, dont les scripts ne sont
 pas versionnés — elle atteste d'une validation faite, elle n'est pas rejouable depuis ce dépôt. Ce que
 l'ensemble ne couvre pas :
 
-- **Le test de concurrence ne s'exécute pas sur toutes les machines.**
+- **Le test de concurrence ne s'exécute pas sur toutes les machines locales.**
   `ReservationConcurrencyIT` lance 40 commandes concurrentes sur 10 unités et vérifie qu'il n'y a
-  aucune survente. Testcontainers ne parvient pas à dialoguer avec Docker Engine 29 — son client
-  négocie une version d'API que le moteur a retirée — et le test **se désactive de lui-même** plutôt
-  que d'échouer. Il devrait s'exécuter sur une CI Linux, mais **cela n'a pas encore été observé** :
-  aucune CI n'est en place à ce jour. En l'état, la garantie anti-survente repose donc sur la
-  conception et sur la contrainte en base, non sur un test concurrent réellement exécuté. La nuance
-  mérite d'être connue avant de reprendre l'affirmation.
+  aucune survente. Sur un poste équipé de Docker Engine 29, Testcontainers ne parvient pas à
+  dialoguer avec le démon — son client négocie une version d'API que le moteur a retirée — et le
+  test **se désactive de lui-même** plutôt que d'échouer. Il s'exécute et passe sur la CI GitHub
+  Actions (runner Ubuntu), où la garantie anti-survente est donc vérifiée par un test concurrent
+  réel. Son premier run a d'ailleurs révélé un oubli dans le nettoyage du test lui-même, corrigé
+  depuis : un test qui ne tourne nulle part n'est pas un test.
 - **Aucun test au niveau du navigateur.** Le front-end est vérifié par son chemin HTTP exact et par
   des tests unitaires, pas en pilotant un navigateur. Playwright comblerait ce manque.
 - **Aucun test de charge.** Aucun chiffre de débit ou de latence n'apparaît dans ce dépôt, parce
@@ -429,11 +438,9 @@ l'ensemble ne couvre pas :
    existante. C'est ce que promet la conception ; en ajouter une est la façon de le vérifier.
 3. **Observabilité.** Micrometer et OpenTelemetry, en propageant l'identifiant de corrélation que la
    gateway émet déjà, pour tracer une commande lente à travers quatre services.
-4. **Intégration continue.** GitHub Actions exécutant `mvn verify` et la suite front-end sur Linux,
-   où le test de concurrence Testcontainers s'exécute réellement.
-5. **Playwright** sur les deux écrans qui portent le produit : le suivi d'une commande fractionnée et
+4. **Playwright** sur les deux écrans qui portent le produit : le suivi d'une commande fractionnée et
    la comparaison des stratégies.
-6. **Limitation de débit et verrouillage de compte** au niveau de la gateway. Rien ne ralentit
+5. **Limitation de débit et verrouillage de compte** au niveau de la gateway. Rien ne ralentit
    actuellement une attaque par bourrage d'identifiants sur `/api/v1/auth/login`.
 
 ---
@@ -476,3 +483,7 @@ jamais la frontière d'un contrôleur.** Voir [`docs/06-repository-layout.md`](d
   moitié intéressante. Ils restent en anglais dans le code Java, avec les identifiants qu'ils
   commentent ; les scripts et fichiers destinés à être lus directement (`scripts/`, `docker-compose`)
   sont commentés en français, comme la documentation.
+
+## Licence
+
+Ce projet est publié sous licence [MIT](LICENSE).
